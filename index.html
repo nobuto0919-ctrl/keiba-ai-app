@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI競馬予想</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="icon" href="icon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="icon-180.png"><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0f1b2d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AI競馬"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.5"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Noto Sans JP',sans-serif;background:#f2f2f2;color:#1f2937}
+.race-number{background:#e44f4f;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;width:34px;height:34px;font-size:13px;flex-shrink:0}
+.badge-gray{background:#a8a8a8;color:#fff;font-size:10px;padding:1px 8px;border-radius:10px;white-space:nowrap}
+.badge-blue{background:#5c6db3;color:#fff;font-size:10px;padding:1px 8px;border-radius:10px;white-space:nowrap}
+.badge-rec{background:#e44f4f;color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;white-space:nowrap}
+.badge-tierb{background:#0284c7;color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;white-space:nowrap}
+.badge-tiera{background:#7c3aed;color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;white-space:nowrap}
+.badge-vs{background:#b45309;color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;white-space:nowrap}
+.badge-va{background:#047857;color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;white-space:nowrap}
+.badge-vc{background:#6b7280;color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;white-space:nowrap}
+.badge-vd{background:#9ca3af;color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;white-space:nowrap}
+.highlight-race{background:#fff8dc;border:1px solid #f2e2a7}
+.table-header{background:#3f4854;color:#fff}
+.waku-1{background:#fff;color:#333}.waku-2{background:#333;color:#fff}.waku-3{background:#d93b3b;color:#fff}.waku-4{background:#2b70d6;color:#fff}
+.waku-5{background:#e6c300;color:#333}.waku-6{background:#2e8b57;color:#fff}.waku-7{background:#ff8c00;color:#fff}.waku-8{background:#ff99cc;color:#333}
+.m-◎{color:#e63946;font-size:1.25rem;font-weight:900}.m-○,.m-▲{color:#333;font-size:1.2rem;font-weight:900}.m-△{color:#666;font-size:1.1rem;font-weight:700}
+.m-☆{color:#d4a900;font-size:1.1rem;font-weight:900}.m-消{color:#aaa;font-size:.8rem}
+.g-S{color:#e63946;font-weight:700}.g-A{color:#2b70d6;font-weight:700}.g-Bp{color:#c9a300;font-weight:700}.g-Bm{color:#777}.g-C{color:#999}.g-消{color:#bbb}
+.row-axis{background:#fffacd}
+.day-grid{display:grid;grid-template-columns:repeat(var(--n),minmax(112px,1fr));column-gap:4px}
+@media (min-width:768px){.day-grid{grid-template-columns:repeat(var(--n),320px);column-gap:16px;width:max-content}}
+@media (max-width:767px){.race-number{width:24px;height:24px;font-size:10px}.badge-gray,.badge-blue{font-size:9px;padding:0 5px}.badge-rec,.badge-tierb,.badge-tiera,.badge-vs,.badge-va,.badge-vc,.badge-vd{font-size:9px;padding:0 4px}}
+th[data-sort]{cursor:pointer;user-select:none}th[data-sort]:hover{background:#56606d}
+.sort-ind{font-size:9px;margin-left:2px;opacity:.5}.sort-on .sort-ind{opacity:1;color:#fde047}
+.tab{padding:8px 18px;font-weight:700;border:1px solid #d1d5db;border-bottom:none;background:#e5e7eb;color:#4b5563;border-radius:4px 4px 0 0}
+.tab-on{background:#2c3e50;color:#fff;border-color:#2c3e50}
+
+/* 2026-11-18 スマホアプリ風（紺と金）。アイコンは make_icon.py */
+:root{--ink:#0f1b2d;--ink2:#1b2a41;--gold:#c9a24b;--gold2:#e8cf8f;--paper:#f6f3ec;--line:#e7e1d4;--muted:#7a7f8a}
+body{background:var(--paper)}
+.num{font-family:'Inter','Noto Sans JP',sans-serif;font-feature-settings:"tnum"}
+.appbar{background:linear-gradient(160deg,var(--ink),var(--ink2))}
+.tc{font-family:'Inter',sans-serif;font-weight:800;font-size:11px;min-width:20px;height:20px;padding:0 4px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+.tc-S{background:linear-gradient(135deg,#e8cf8f,#b48a2f);color:#2b1f05}.tc-A{background:#2f8f6b}.tc-B{background:#3a7bd5}.tc-C{background:#a3a7b0}
+.hero{border-radius:18px;padding:14px;background:linear-gradient(160deg,var(--ink),var(--ink2));color:#fff;border:1px solid rgba(232,207,143,.35)}
+.hero .gl{border-radius:14px;padding:12px;background:linear-gradient(135deg,rgba(201,162,75,.22),rgba(201,162,75,.06));border:1px solid rgba(232,207,143,.3)}
+.lst{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.lst>a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0ebe0}
+.lst>a:last-child{border-bottom:none}
+.rnb{width:30px;height:30px;border-radius:10px;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--ink)}
+.stc{background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.bnav{display:none}
+.mcell{display:none}
+.mtbl{display:none}
+.pn{cursor:pointer}.pn .pt{font-size:9px;color:#9a7b2f;font-weight:600;margin-left:3px}
+.pastbox{padding:6px 6px 8px;display:flex;flex-direction:column;gap:6px}
+.prun{background:#fff;border:1px solid #ece4d3;border-radius:8px;padding:6px 8px;font-size:11px;line-height:1.45;color:#3b3f46}
+.prun .fin{font-family:'Inter',sans-serif;font-weight:800;font-size:15px;margin-right:4px}.prun .fin.top{color:#d64545}
+.prun .tg{display:inline-block;border-radius:4px;padding:0 5px;font-size:10px;font-weight:700;margin-right:4px}
+.prun .gr{float:right;min-width:26px;text-align:center;border-radius:6px;padding:1px 6px;font-family:'Inter',sans-serif;font-weight:800;font-size:13px;margin-left:6px}
+.gr-S{background:#d4a017;color:#fff}.gr-A{background:#2f8f5b;color:#fff}.gr-Bp{background:#dbe7fb;color:#2f4f8f}.gr-Bm{background:#eceef1;color:#6b6f76}.gr-C{background:#fde8e8;color:#b42318}
+.evrk{display:inline-block;min-width:32px;text-align:center;border-radius:7px;padding:2px 8px;font-family:'Inter',sans-serif;font-weight:800;font-size:16px}
+.prun .cm{color:#3b3f46;font-size:11px;margin-top:3px;line-height:1.55;white-space:pre-line}
+.chips{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px 14px}
+.chips>div{display:flex;align-items:baseline}.chips small{font-size:10px;color:var(--muted);margin-left:1px}
+.tcard{display:block;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.fbox{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin-bottom:12px}
+.fsel{display:flex;flex-direction:column;gap:2px;font-size:10px;color:var(--muted);font-weight:700}
+.fsel select{font-size:13px;font-weight:700;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+.gb{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:17px;padding:0 4px;border-radius:4px;font-family:'Inter',sans-serif;font-weight:800;font-size:10px;color:#fff;flex-shrink:0}
+.gb-G1{background:#1d4ed8}.gb-G2{background:#dc2626}.gb-G3{background:#15803d}.gb-L{background:#7c6a46}.gb-OP{background:#6b7280}
+.gchip{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px 4px 5px;font-size:12px;font-weight:700;color:var(--muted);opacity:.55}
+.gchip.on{opacity:1;border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;color:var(--ink)}
+.lst.hl>a,.lst.hl>div{display:block;gap:0}.hrow{display:block;padding:9px 12px;border-bottom:1px solid #f0ebe0}.hrow:last-child{border-bottom:none}
+.htbl{width:100%;border-collapse:collapse;background:#fff;font-size:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.htbl th{background:var(--ink);color:var(--gold2);font-size:10px;padding:6px 3px;font-weight:700}
+.htbl td{padding:5px 3px;border-bottom:1px solid #f0ebe0;text-align:center;white-space:nowrap}
+.htbl td.nm{text-align:left;font-weight:700;white-space:normal}.htbl td.nm small{display:block;font-weight:400;color:var(--muted);font-size:10px}
+.htbl tr.ax td{background:#fff8e6}
+.htbl tr.pastrow td{white-space:normal;text-align:left;padding:0;background:#faf8f3}
+.sec-h{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:700;margin:18px 2px 8px}
+@media (max-width:767px){
+  main#app{padding-bottom:96px}
+  .bnav{display:flex;position:fixed;left:10px;right:10px;bottom:10px;z-index:50;background:rgba(15,27,45,.95);border-radius:22px;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 10px 30px rgba(15,27,45,.35)}
+  .bnav a{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:10px;color:#8e97a6;min-width:52px}
+  .bnav a svg{width:22px;height:22px}
+  .bnav a.on{color:var(--gold2)}
+  .day-grid{grid-template-columns:repeat(var(--n),minmax(0,1fr));column-gap:3px}
+  .dcard{display:none!important}
+  .mcell{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:3px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:3px 4px;margin:1.5px 0;min-height:30px}
+  .mcell .r{font-family:'Inter',sans-serif;font-weight:800;font-size:11px;color:var(--ink)}
+  .mcell .c{font-size:10px;line-height:1.15;color:#4b4f57;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mcell .c small{display:block;font-size:9px;color:var(--muted)}
+  .mcell .c small.k{color:#8a6a1f;font-weight:700}
+  .mcell .c small .st{font-family:'Inter',sans-serif;font-weight:700;color:var(--ink)}
+  .mcell .c .n{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal;overflow:hidden;word-break:break-all;font-weight:600;color:var(--ink)}
+  .mcell .tc{min-width:17px;height:17px;font-size:9px;border-radius:5px;padding:0 3px}
+  .mcell.ms{background:#fffaf0;border-color:#e8cf8f}
+  .mcell.md{opacity:.55}
+  .mcell.mh{background:#ffdfe5;border:1.5px solid #e0566c}
+  .mcell .c small.rs{color:#6b6f76;font-weight:600}
+  .mcell .c small.rs.hit{color:#d64545;font-weight:800}
+  .mtbl{display:table;width:100%;border-collapse:collapse;background:#fff;font-size:12px;border:1px solid var(--line)}
+  .mtbl th{background:var(--ink);color:var(--gold2);font-size:10px;padding:6px 3px;font-weight:700}
+  .mtbl td{padding:5px 3px;border-bottom:1px solid #f0ebe0;text-align:center;white-space:nowrap}
+  .mtbl td.nm{text-align:left;font-weight:700}
+  .mtbl td.nm small{display:block;font-weight:400;color:var(--muted);font-size:10px}
+  .mtbl tr.ax td{background:#fff8e6}
+  .mtbl tr.pastrow td{white-space:normal;text-align:left;padding:0;background:#faf8f3}
+  .mtbl .wk{display:inline-flex;width:20px;height:20px;border-radius:5px;align-items:center;justify-content:center;font-weight:800;font-size:11px}
+  .dtable{display:none}
+}
+</style><!--HEAD--></head>
+<body class="min-h-screen text-[13px]">
+<header class="appbar text-white"><div class="max-w-[1400px] mx-auto px-4 py-2.5 flex items-center gap-4">
+<a href="#top" class="flex items-center gap-2 font-bold tracking-wide"><img src="icon-180.png" alt="" class="w-7 h-7 rounded-lg">AI競馬予想</a><a href="#latest" class="hidden md:inline text-xs text-gray-300 hover:text-white">開催日</a><a href="#tiers" class="hidden md:inline text-xs text-gray-300 hover:text-white">推奨度</a><a href="#stats" class="hidden md:inline text-xs text-gray-300 hover:text-white">成績</a><a href="#about" class="hidden md:inline text-xs text-gray-300 hover:text-white">説明</a><!--NAV--></div></header>
+<main id="app" class="max-w-[1400px] mx-auto p-3 md:p-6"><p class="text-gray-500">読み込み中…</p></main>
+<nav class="bnav" aria-label="メニュー"><a href="#top" data-tab="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>ホーム</a><a href="#latest" data-tab="day"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M16 3v4M8 3v4M4 11h16"/><rect x="8" y="14" width="3" height="3"/></svg>開催日</a><a href="#tiers" data-tab="tiers"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>推奨度</a><a href="#stats" data-tab="stats"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19h16"/><path d="M7 16v-5M12 16V7M17 16v-8"/></svg>成績</a><a href="#about" data-tab="about"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>説明</a></nav>
+<script>
+const WEEK = "日月火水木金土";
+const PLACE = {"札幌":"01","函館":"02","福島":"03","新潟":"04","東京":"05","中山":"06","中京":"07","京都":"08","阪神":"09","小倉":"10"};
+const PENDING_MSG = "障害レースのAI予想は準備中です。新馬戦は単勝オッズが出たら印と推奨度を決めます。";
+const PAST_NOTE = '<div class="text-[11px] text-gray-500 bg-yellow-50 border border-yellow-200 px-2 py-1 mb-3">推奨度S・A・B・Cは2026-11-15に決め直したもので、過去の日付も同じ決め方で付け直しています（当時の予想とは違います）。過去の日付の印と買い目は、JV-Linkの時系列オッズから取り出した発走10分前のオッズ（と30分前のオッズ）で決めていて、回収率もその買い目で数えています。能力評価（新適合度）は2024〜2026年のデータも使って作ったもので、当時に予想していたらここまでは当たらなかった可能性があります。予想と結果の表示だけで、馬券の購入をすすめるものではありません。</div>';
+const app = document.getElementById("app");
+const cache = {};
+const e = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const yen = n => Number(n).toLocaleString("ja-JP");
+
+async function get(name) {
+  if (!cache[name]) cache[name] = fetch(`data/${name}.json`, {cache: "no-cache"}).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  return cache[name];
+}
+function jpDate(d) {
+  const x = new Date(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6));
+  return `${x.getFullYear()}年${x.getMonth() + 1}月${x.getDate()}日（${WEEK[x.getDay()]}）`;
+}
+// 推奨度: S = オープン以上の3連複（検証済み）、B = 3勝クラスの馬連＋ワイド（参考・記録中）
+const TIER = {
+  S: {name: "推奨度S", kind: "3連複フォーメーション", badge: "badge-rec", box: "bg-red-50 border-red-200", text: "text-red-600",
+      note: "15点 各100円（計1,500円）。締切前に◎の単勝が10〜25倍から外れたら見送り。検証（2024年〜）で回収率101%・的中率16%。お金を賭けずに記録して確かめ中。"},
+  // オープン以上・ダートの従来の3連複（2026-11-08 推奨度Sから推奨度Aに下げた）
+  SD: {name: "推奨度A", kind: "3連複フォーメーション", badge: "badge-tiera", box: "bg-violet-50 border-violet-200", text: "text-violet-700",
+      note: "オープン以上・ダートの3連複フォーメーション。15点 各100円（計1,500円）。ダートは成績が弱いため推奨度Aにしている（検証で、見落とし度の推奨と重ならないレースは2023年54%・2024年〜57%）。見落とし度の推奨度Aと重なったら、そちらを出す。締切前に◎の単勝が10〜25倍から外れたら見送り。お金を賭けずに記録して確かめ中。"},
+  B: {name: "推奨度B", kind: "馬連＋ワイド（参考）", badge: "badge-tierb", box: "bg-sky-50 border-sky-200", text: "text-sky-700",
+      note: "参考（推奨度B）。3勝クラスで◎が単勝20〜50倍のランクS〜Aのとき。馬連◎−○▲△ 各200円＋ワイド◎−○▲△ 各300円（計1,500円）。検証（2024年〜）で回収率約110%・的中率約15%だが、条件を少しずらすと大きく下がるため信頼度は低め。締切前に◎の単勝が20〜50倍から外れたら見送り。お金を賭けずに記録して確かめ中。"},
+  B2: {name: "推奨度B", kind: "未勝利戦・単勝＋複勝（参考）", badge: "badge-tierb", box: "bg-sky-50 border-sky-200", text: "text-sky-700",
+      note: "参考（推奨度B）。未勝利戦で◎が単勝10〜20倍かつ能力2位以内のとき。単勝500円＋複勝1,000円（計1,500円）。検証（2022年〜、確定オッズ）で回収率約82%・複勝率約28%、年別87/89/56/67/119%。100%未満で、偶然とも区別できていない段階。1200m以下は特に低い（約58%）。締切前に◎の単勝が10〜20倍から外れたら見送り。お金を賭けずに記録して確かめ中。"},
+};
+const tierOf = r => r.bet ? (r.bet.tier || "S") : null;
+// 推奨度 S・A・B（2026-11-15 から。predictor/tier10.py）と推奨度C（ほかが付かないレースのワイド。前の推奨度D）。1レース1,500円
+const VT = {
+  "新S": {badge: "badge-vs", box: "bg-amber-50 border-amber-200", text: "text-amber-700", cls: "オープン以上の芝",
+          home: "オープン以上芝・3連複か馬連"},
+  "新A": {badge: "badge-va", box: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", cls: "未勝利芝・3勝・オープン以上のダート・オープン以上の単勝",
+          home: "未勝利芝・馬連／3勝芝・馬連など／3勝ダート・3連複／オープン以上ダート・馬連／オープン以上で推奨度Sが付かず◎20倍以上か、能力1位が10倍以下・期待値1.0以上なら単勝"},
+  "新B": {badge: "badge-tierb", box: "bg-sky-50 border-sky-200", text: "text-sky-700", cls: "未勝利ダート・1勝・2勝・新馬戦（◎10〜20倍）",
+          home: "未勝利ダート・馬連／1勝芝・3連複／1勝ダート・馬連／2勝芝・馬連／2勝ダート・ワイド／新馬戦・3連複と馬連"},
+  "新C": {badge: "badge-vd", box: "bg-gray-50 border-gray-300", text: "text-gray-600", cls: "ほかの推奨度が付かないレース（ワイド・単勝・3連複）",
+          home: "ほかの推奨度が付かないレース・◎3倍未満はワイド／3〜4.4倍は単勝／4.5倍以上と新馬戦は3連複"},
+};
+VT["新D"] = VT["新C"];   // 古いデータの名前（2026-11-15 より前の推奨度D）
+const V_NOTE_D = "推奨度C＝新馬戦以外で、推奨度S・A・Bが付かないレース。◎＝単勝6.9倍以下×能力S・A×見落とし度1.0以上で能力が一番高い馬（いなければ条件を順に緩める）、○▲△＝能力上位3頭、☆＝残りから見落とし度0.95以上を能力順に4頭（印のみ）。◎の単勝が3倍未満ならワイド ◎−○▲△ の3点（各500円）、3〜4.4倍なら◎の単勝1,500円、4.5倍以上なら3連複 ◎○▲△ の3点（◎と○▲△の2頭、各500円）。どれも1レース1,500円。";
+const V_NOTE = "推奨度は、クラスと芝・ダートごとに1つずつ決めている（2026-11-15）。発走10分前のオッズで決めた印と買い目の回収率で、" +
+  "S＝2023・2024・2025・2026年のどの年も100%以上（または、4年のうち3年以上で100%以上・4年合計120%以上・1年に100レース以上）、A＝2026年は100%以上、B＝それ以外。条件に合わないレースは推奨度C。" +
+  "見落とし度＝能力・調教・騎手・厩舎・相手の強さ・血統から出した3着内確率 ÷ 単勝オッズだけから出した3着内確率（1.0より大きいほど、オッズの割に来そう）。" +
+  "「30分前から売れてきた／売れなくなった」＝発走10分前の単勝 ÷ 30分前の単勝 が 0.9以下／1.1以上。検証の回収率は条件を選ぶのに使った年のもので、実際にはこれより下がることがある。お金を賭けずに記録して確かめ中。";
+const V_ROI = {};
+const vTierOf = r => r.bet_v ? r.bet_v.tier : null;
+const vn = t => String(t || "").replace("新", "");
+// 成績を足し合わせる（推奨度Sは、オープン以上の3連複と見落とし度の馬連をまとめて1つに表示する。2026-11-08 利用者の判断）
+const addStats = (...xs) => xs.reduce((a, x) => { for (const k of ["bets", "done", "hits", "cost", "ret"]) a[k] += (x || {})[k] || 0; return a; },
+  {bets: 0, done: 0, hits: 0, cost: 0, ret: 0});
+const VT_OWN = ["新B", "新C"];   // 単独で行を出す見落とし度の推奨度（新S は推奨度S、新A は推奨度A に入れる）   // 画面では「新」を付けない（2026-11-08 利用者の判断。中では 新S/新A/新C で従来と区別する）
+const hasOdds = r => (r.horses || []).some(h => h.odds);
+const noBet = r => !r.bet && !r.bets_a && !r.bet_v && !pending(r);
+const skipLabel = r => hasOdds(r) ? "見送り" : "オッズ待ち";
+function vStats(d, tier, key = "v") {   // key = "v_alt" は推奨度Cの3連複
+  const rs = d.races.filter(r => vTierOf(r) === tier && (key !== "v_alt" || r.bet_v.tickets_alt)), done = rs.filter(r => r.result && r.result[key]);
+  return {bets: rs.length, done: done.length, hits: done.filter(r => r.result[key].ret > 0).length,
+          cost: done.reduce((a, r) => a + r.result[key].cost, 0), ret: done.reduce((a, r) => a + r.result[key].ret, 0)};
+}
+// 推奨度A: オープン以上。軸（多くは「能力2位以内」）が単勝の範囲に入るときの買い目をまとめて表示する（中身は app_data.A_PLANS）
+const A_NOTE = "推奨度A：3勝クラス・芝で、◎＝単勝20〜30倍・ランクB+以上（総合評価55点以上）で能力の割に人気が無い馬（能力÷市場1.2以上）。馬連◎−○▲△ 各500円（計1,500円）。検証（2024年〜）で回収率約139%・的中約8%、年別107/145/165%。的中は12回に1回ほどで連敗は普通。締切前に◎の単勝が20〜30倍から外れたら見送り。お金を賭けずに記録して確かめ中。";
+function aStatsOf(d) {   // その日の推奨度A（当てはまる買い目をまとめて1レースとして数える）
+  const s = {bets: 0, done: 0, hits: 0, cost: 0, ret: 0};
+  for (const r of d.races) {
+    if (!r.bets_a) continue;
+    s.bets++;
+    const xs = Object.values((r.result || {}).a || {});
+    if (xs.length) { const ret = xs.reduce((a, x) => a + x.ret, 0); s.done++; s.hits += ret > 0; s.cost += xs.reduce((a, x) => a + x.cost, 0); s.ret += ret; }
+  }
+  return s;
+}
+function statsText(s, label = "推奨") {
+  if (!s || !s.bets) return "推奨なし";
+  if (!s.done) return `${label} ${s.bets}レース`;
+  const roi = s.cost ? s.ret / s.cost * 100 : 0;
+  return `${label} ${s.done}レース・的中 ${s.hits}回・投資 ${yen(s.cost)}円・払戻 ${yen(s.ret)}円・<span class="${roi >= 100 ? "text-red-600 font-bold" : "text-gray-600"}">回収率 ${roi.toFixed(0)}%</span>`;
+}
+function betStats(d, tier = "S") {
+  const rs = d.races.filter(r => tierOf(r) === tier), done = rs.filter(r => r.result && "bet_return" in r.result);
+  return {bets: rs.length, done: done.length, hits: done.filter(r => r.result.bet_return > 0).length,
+          cost: done.reduce((a, r) => a + r.result.bet_cost, 0), ret: done.reduce((a, r) => a + r.result.bet_return, 0)};
+}
+// 新馬戦は 2026-11-18 から予想する（単勝オッズが入ると nc_ready）。障害は準備中のまま
+const pending = r => ["障害"].includes(r.class) || (r.name || "").includes("障害") || r.surface === "障害" || ((!!r.newcomer || r.class === "新馬") && !r.nc_ready);
+const classBadge = r => r.class ? `<span class="${r.op ? "badge-blue" : "badge-gray"}">${e(r.class)}</span>` : "";
+const surfShort = s => s === "ダート" ? "ダ" : s;
+// 全レースのマス用: レース名からクラスの部分（･3勝・G3・(L)）を外す。未勝利・新馬・１勝ｸﾗｽ など名前がクラスだけのレースは null
+const raceNameOnly = n => {
+  if (!n || /^(未勝利|新馬|[１２３1-3]勝ｸﾗｽ|障害)/.test(n)) return null;
+  const star = n.endsWith("*") ? "*" : "";
+  return n.replace(/\*$/, "").replace(/[･・]\d勝$|\(L\)$|G[123]$/, "") + star;
+};
+const gcls = g => g ? ({"B+": "g-Bp", "B-": "g-Bm", "消": "g-C"}[g] || `g-${g}`) : "";
+// 出馬表の能力・AI評価は S〜C の5段階で見せる（能力の「消」は C。2026-11-21 利用者の希望）
+const g5 = g => g === "消" ? "C" : g;
+const gcell = g => g ? `<span class="${gcls(g)}">${e(g5(g))}</span>` : '<span class="text-gray-300">-</span>';
+const raceId = (date, r) => `r-${date}-${PLACE[r.place] || "00"}-${r.race}`;
+
+
+// ホームの「次の推奨」（2026-11-18）: 最新の開催日の推奨度S・Aのレース。結果の出ていないレースを発走順に、全部終わっていればその日の推奨と結果
+const tierLetter = r => r.bet_v ? vn(r.bet_v.tier) : "";
+// 今見るべき開催日（2026-11-20）: 今日の開催があれば今日、無ければ次の開催日、それも無ければ最後の開催日（日付は端末の日付）
+function currentDate(ds) {
+  ds = [...ds].sort();
+  const n = new Date(), today = `${n.getFullYear()}${String(n.getMonth() + 1).padStart(2, "0")}${String(n.getDate()).padStart(2, "0")}`;
+  return ds.find(x => x >= today) || ds[ds.length - 1];
+}
+async function nextPicks(days) {
+  const latest = currentDate(days.map(x => x.date));
+  if (!latest) return "";
+  const d = await get(latest);
+  const picks = d.races.filter(r => r.bet_v && ["新S", "新A"].includes(r.bet_v.tier)).sort((a, b) => (a.start || "").localeCompare(b.start || ""));
+  if (!picks.length) return "";
+  const up = picks.filter(r => !r.result);
+  const show = up.length ? up : picks;
+  const h = show[0], b = h.bet_v, ax = (h.horses || []).find(x => x.num === b.axis) || {};
+  const pts = b.tickets.length, sum = b.tickets.reduce((a, t) => a + t.yen, 0);
+  const resTxt = r => { const x = (r.result || {}).v; return x ? (x.ret ? `<span class="text-red-600 font-bold">的中 ${yen(x.ret)}円</span>` : `<span class="text-gray-400">不的中</span>`) : ""; };
+  const hero = `<a href="#${raceId(latest, h)}" class="hero block mb-3 max-w-3xl"><div class="text-[11px] tracking-widest text-gray-300 mb-2">${jpDate(latest)}・${up.length ? "次の推奨" : "この日の推奨"}</div>` +
+    `<div class="gl"><div class="flex items-center gap-2"><span class="tc tc-${tierLetter(h)}">${tierLetter(h)}</span><span class="font-bold text-base">${e(h.place)}${h.race}R</span>${h.full_name ? `<span class="text-sm font-bold truncate">${e(h.full_name)}</span>` : ""}` +
+    `<span class="ml-auto num text-sm" style="color:var(--gold2)">${e(h.start || "")}</span></div>` +
+    `<div class="mt-2 flex items-baseline gap-2"><span class="text-2xl font-black" style="color:#ff6b6b">◎</span><span class="font-bold">${b.axis} ${e(ax.name || "")}</span></div>` +
+    `<div class="text-[11px] text-gray-300 mt-1">${e((b.kind || "").replace(/\s*\d+点$/, ""))} ${pts}点・${yen(sum)}円・発走10分前のオッズで決定 ${resTxt(h)}</div></div></a>`;
+  const rest = show.slice(1, 7).map(r => `<a href="#${raceId(latest, r)}"><div class="rnb num">${r.race}</div><div><div class="font-bold text-[13px]">${e(r.place)}${r.race}R ${e(r.full_name ? r.full_name + " " + (r.class || "") : r.class || "")}</div>` +
+    `<div class="text-[11px] text-gray-500">${e(r.bet_v.kind || "")} ${r.bet_v.tickets.length}点 ${resTxt(r)}</div></div><div class="ml-auto flex items-center gap-2"><span class="num text-[11px] text-gray-500">${e(r.start || "")}</span><span class="tc tc-${tierLetter(r)}">${tierLetter(r)}</span></div></a>`).join("");
+  return hero + (rest ? `<div class="sec-h">${up.length ? "このあとの推奨" : "この日のほかの推奨"}</div><div class="lst mb-4 max-w-3xl">${rest}</div>` : "");
+}
+
+async function aboutPage() {
+  document.title = "説明";
+  return `<div class="max-w-3xl grid gap-3"><h1 class="text-lg font-bold">説明</h1>` +
+    `<div class="stc text-[13px] leading-relaxed"><div class="font-bold mb-1">推奨度</div>${e(V_NOTE)}</div>` +
+    `<div class="stc text-[13px] leading-relaxed"><div class="font-bold mb-1">推奨度C</div>${e(V_NOTE_D)}</div>` +
+    `<div class="stc text-[13px] leading-relaxed"><div class="font-bold mb-1">区分ごとの推奨度</div>` +
+    ["新S", "新A", "新B", "新C"].map(t => `<div class="mt-1"><span class="tc tc-${vn(t)} mr-1">${vn(t)}</span>${e(VT[t].home)}</div>`).join("") + `</div>` + PAST_NOTE + `</div>`;
+}
+
+let lastDate = "";   // 最後に見ていた開催日（一覧に戻ったとき、その日の行まで移動して色を付ける）
+async function daysPage() {
+  const days = await get("days");
+  const z = () => ({bets: 0, done: 0, hits: 0, cost: 0, ret: 0});
+  const tot = {S: z(), A: z(), SD: z(), B: z(), B2: z(), "新S": z(), "新A": z(), "新B": z(), "新C": z(), OP: z(), OPD: z()}, months = new Map();   // 新しい月から順に
+  // 並びは推奨度順（S → A → B → C）。S と A は従来と見落とし度の成績を合算して1行（2026-11-08 利用者の判断）
+  const vRow = (d, t) => d.V && d.V[t] && d.V[t].bets ? `<span class="block ${VT[t].text}">${statsText(d.V[t], vn(t))}</span>` : "";
+  const vSum = t => `<div><div class="font-bold"><span class="${VT[t].badge} mr-1">推奨度${vn(t)}</span>${VT[t].home}（表示中の全日付）</div>${statsText(tot[t])}</div>`;
+  for (const d of days) {
+    for (const k in tot.S) { tot.S[k] += d[k]; tot.A[k] += (d.A || {})[k] || 0; tot.SD[k] += (d.SD || {})[k] || 0; tot.B[k] += (d.B || {})[k] || 0; tot.B2[k] += (d.B2 || {})[k] || 0; tot.OP[k] += (d.OP || {})[k] || 0; tot.OPD[k] += (d.OPD || {})[k] || 0;
+      for (const t of ["新S", "新A", "新B", "新C"]) tot[t][k] += ((d.V || {})[t] || {})[k] || 0; }
+    const m = d.date.slice(0, 6);
+    if (!months.has(m)) months.set(m, []);
+    months.get(m).push(
+      `<a href="#d-${d.date}" id="day-${d.date}" class="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 ${d.date === lastDate ? "bg-yellow-100" : "bg-white"} border-l-4 border-[#e44f4f] px-4 py-2 hover:bg-yellow-50 shadow-sm">` +
+      `<span class="font-bold whitespace-nowrap">${jpDate(d.date)}</span><span class="text-gray-500 text-xs">${d.races}レース</span>` +
+      `<span class="text-xs md:ml-auto md:text-right">${(() => { const x = addStats(d, (d.V || {})["新S"]); return x.bets ? statsText(x, "S") : ""; })()}` +
+      (() => { const a = addStats(d.A, d.SD, (d.V || {})["新A"]); return a.bets ? `<span class="block text-violet-700">${statsText(a, "A")}</span>` : ""; })() +
+      `${d.B && d.B.bets ? `<span class="block text-sky-700">${statsText(d.B, "B")}</span>` : ""}` +
+      `${d.B2 && d.B2.bets ? `<span class="block text-sky-700">${statsText(d.B2, "B（未勝利）")}</span>` : ""}` +
+      vRow(d, "新B") + vRow(d, "新C") + `</span></a>`);
+  }
+  const items = [...months].map(([m, rows]) =>
+    `<h2 class="font-bold text-gray-600 mt-4 mb-1">${m.slice(0, 4)}年${+m.slice(4)}月</h2><div class="grid gap-1">${rows.join("")}</div>`);
+  const summary = `<div class="bg-white shadow-sm p-3 mb-3 text-sm grid gap-2">` +
+    `<div><div class="font-bold"><span class="${VT["新S"].badge} mr-1">推奨度S</span>${VT["新S"].home}（表示中の全日付）</div>${statsText(addStats(tot.S, tot["新S"]))}</div>` +
+    `<div><div class="font-bold"><span class="${VT["新A"].badge} mr-1">推奨度A</span>${VT["新A"].home}（表示中の全日付）</div>${statsText(addStats(tot.A, tot.SD, tot["新A"]))}</div>` +
+    vSum("新B") + vSum("新C") +
+    `<div><div class="font-bold">オープン以上・推奨度S・A（表示中の全日付）</div>${statsText(tot.OP)}</div>` +
+    `<div><div class="font-bold">オープン以上・推奨度S・A・C（表示中の全日付）</div>${statsText(tot.OPD)}</div></div>`;
+  document.title = "AI競馬予想";
+  const roi = x => x.cost ? Math.round(x.ret / x.cost * 100) : 0;
+  const sAll = addStats(tot.S, tot["新S"]), aAll = addStats(tot.A, tot.SD, tot["新A"]);
+  const cards = `<div class="grid grid-cols-2 gap-2 mb-3 max-w-3xl">` +
+    [["S", sAll], ["A", aAll]].map(([t, x]) => `<div class="stc"><div class="text-[11px] text-gray-500 flex items-center gap-1"><span class="tc tc-${t}">${t}</span>回収率</div>` +
+      `<div class="num text-2xl font-extrabold ${roi(x) >= 100 ? "text-emerald-700" : "text-gray-600"}">${roi(x)}<span class="text-sm">%</span></div><div class="text-[11px] text-gray-500">${x.done}レース・的中${x.hits}回</div></div>`).join("") + `</div>`;
+  document.title = "開催日の一覧";
+  return `<h1 class="text-lg font-bold mb-3">開催日の一覧</h1><div class="max-w-3xl">${cards}</div>${summary}${PAST_NOTE}<div class="max-w-3xl">${items.join("")}</div>`;
+}
+
+// ===== 2026-11-21 利用者の希望: ホームを整理し、推奨度タブと条件で絞れる成績タブを追加 =====
+const todayStr = () => { const n = new Date(); return `${n.getFullYear()}${String(n.getMonth() + 1).padStart(2, "0")}${String(n.getDate()).padStart(2, "0")}`; };
+// 推奨度の一覧（app_data.box_bet・BOX_TIER・tier10.PLANS・tier_open_a・tier_d・nc_live.nc_bet と同じ内容。決め方を変えたらここも直す）
+// kinds = 成績を数える券種（空ならその推奨度の全部）
+const TIER_TABLE = [
+  {cls: "新馬", surf: "", tier: "B", kind: "3連複＋馬連", kinds: [], cond: "◎＝単勝10〜20倍で特徴（厩舎・調教・父の新馬戦成績・直前に売れてきた）が3つ以上"},
+  {cls: "新馬", surf: "", tier: "C", kind: "3連複", kinds: [], cond: "推奨度Bの◎がいないとき、特徴の多い馬が◎"},
+  {cls: "未勝利", surf: "芝", tier: "A", kind: "馬連 3点", kinds: [], cond: "◎＝単勝10〜20倍・見落とし度1.1以上で能力1位"},
+  {cls: "未勝利", surf: "ダ", tier: "B", kind: "馬連 3点", kinds: [], cond: "◎＝単勝15〜20倍で、30分前から売れてきた馬"},
+  {cls: "1勝", surf: "芝", tier: "B", kind: "3連複 15点", kinds: [], cond: "◎＝単勝10〜50倍・見落とし度1.0以上で、30分前から売れてきた馬"},
+  {cls: "1勝", surf: "ダ", tier: "B", kind: "馬連 3点", kinds: [], cond: "◎＝単勝10〜20倍・見落とし度1.1以上・能力5位以内"},
+  {cls: "2勝", surf: "芝", tier: "B", kind: "馬連 3点", kinds: [], cond: "◎＝単勝20〜50倍（○▲△は適合度の順）"},
+  {cls: "2勝", surf: "ダ", tier: "B", kind: "ワイド 3点", kinds: [], cond: "◎＝見落とし度1.1以上（オッズの範囲なし）"},
+  {cls: "3勝", surf: "芝", tier: "A", kind: "馬連など", kinds: [], cond: "◎＝単勝20〜30倍・ランクB+以上・能力÷市場1.2以上 → 単勝20〜50倍・能力S/A（馬連＋ワイド） → 単勝10〜20倍・見落とし度1.1以上 の順"},
+  {cls: "3勝", surf: "ダ", tier: "A", kind: "3連複 15点", kinds: [], cond: "◎＝単勝10〜20倍・見落とし度1.1以上で能力1位"},
+  {cls: "OP", surf: "芝", tier: "S", kind: "3連複 15点 / 馬連 3点", kinds: [], cond: "◎＝単勝10〜25倍・能力S/A（3連複） → 単勝10〜20倍・見落とし度1.1以上で能力1位（馬連） の順"},
+  {cls: "OP", surf: "ダ", tier: "A", kind: "馬連 3点", kinds: ["馬連"], cond: "◎＝単勝10〜20倍・見落とし度1.1以上で能力1位"},
+  {cls: "OP", surf: "", tier: "A", kind: "単勝", kinds: ["単勝"], cond: "推奨度S・Aが付かないとき。見落とし度1.1以上の能力1位が20倍以上、または能力1位が10倍以下で期待値1.0以上なら、その馬の単勝"},
+  // 2026-11-21 利用者の希望: 「ほかのレース」をやめ、クラスごとに推奨度Cを書く
+  {cls: "未勝利", surf: "", tier: "C", kind: "ワイド / 単勝 / 3連複", kinds: [], cond: "上の推奨度A・Bに当たらないとき。◎＝単勝6.9倍以下×能力S・A×見落とし度1.0以上で能力1位。◎3倍未満はワイド3点、3〜4.4倍は単勝、4.5倍以上は3連複3点"},
+  {cls: "1勝", surf: "", tier: "C", kind: "ワイド / 単勝 / 3連複", kinds: [], cond: "上の推奨度Bに当たらないとき。◎＝単勝6.9倍以下×能力S・A×見落とし度1.0以上で能力1位。◎3倍未満はワイド3点、3〜4.4倍は単勝、4.5倍以上は3連複3点"},
+  {cls: "2勝", surf: "", tier: "C", kind: "ワイド / 単勝 / 3連複", kinds: [], cond: "上の推奨度Bに当たらないとき。◎＝単勝6.9倍以下×能力S・A×見落とし度1.0以上で能力1位。◎3倍未満はワイド3点、3〜4.4倍は単勝、4.5倍以上は3連複3点"},
+  {cls: "3勝", surf: "", tier: "C", kind: "ワイド / 単勝 / 3連複", kinds: [], cond: "上の推奨度Aに当たらないとき。◎＝単勝6.9倍以下×能力S・A×見落とし度1.0以上で能力1位。◎3倍未満はワイド3点、3〜4.4倍は単勝、4.5倍以上は3連複3点"},
+  {cls: "OP", surf: "", tier: "C", kind: "ワイド / 単勝 / 3連複", kinds: [], cond: "上の推奨度S・Aに当たらないとき。◎＝単勝6.9倍以下×能力S・A×見落とし度1.0以上で能力1位。◎3倍未満はワイド3点、3〜4.4倍は単勝、4.5倍以上は3連複3点"},
+];
+const CLS_ORDER = ["新馬", "未勝利", "1勝", "2勝", "3勝", "OP"];
+const clsName = c => c === "OP" ? "オープン以上" : ["1勝", "2勝", "3勝"].includes(c) ? c + "クラス" : c;
+// bets.json の1行: [日付, 場, R, クラス, 芝ダ, 推奨度, 券種, 投資, 払戻]
+const sumRows = rows => {
+  const done = rows.filter(x => x[7] > 0);
+  const cost = done.reduce((a, x) => a + x[7], 0), ret = done.reduce((a, x) => a + x[8], 0);
+  let streak = 0, worst = 0;
+  const key = x => x[0] + String(x[2]).padStart(2, "0") + x[1];
+  for (const x of [...done].sort((a, b) => key(a).localeCompare(key(b)))) { streak = x[8] > 0 ? 0 : streak + 1; worst = Math.max(worst, streak); }
+  return {n: rows.length, done: done.length, hits: done.filter(x => x[8] > 0).length, cost, ret, roi: cost ? Math.round(ret / cost * 100) : null, worst};
+};
+const tableRows = (rows, t) => rows.filter(x => x[5] === t.tier && (t.cls ? x[3] === t.cls : x[3] !== "新馬") && (!t.surf || x[4] === t.surf) &&
+  (!t.kinds.length || t.kinds.some(k => x[6].includes(k))));
+const roiCls = r => r == null ? "text-gray-400" : r >= 100 ? "text-emerald-700" : "text-gray-600";
+const sfAttr = o => JSON.stringify(o).replace(/"/g, "&quot;");
+
+async function tiersPage() {
+  document.title = "推奨度の一覧";
+  const rows = await get("bets"), y = todayStr().slice(0, 4), ry = rows.filter(x => x[0].startsWith(y));
+  const card = t => {
+    const s = sumRows(tableRows(ry, t));
+    const sf = sfAttr({tier: t.tier, cls: t.cls, surf: t.surf, kind: t.kinds[0] === "単勝" ? "単勝" : "", period: "y" + y});
+    const sname = t.surf === "芝" ? "芝" : t.surf === "ダ" ? "ダート" : t.cls !== "新馬" ? "芝・ダート" : "";
+    return `<a href="#stats" data-sf="${sf}" class="tcard"><div class="flex items-center gap-2"><span class="tc tc-${t.tier}">${t.tier}</span>` +
+      `<span class="font-bold text-[13px]">${sname}</span><span class="text-[12px] text-gray-500">${e(t.kind)}</span>` +
+      `<span class="ml-auto text-right leading-tight"><span class="num font-extrabold text-[15px] ${roiCls(s.roi)}">${s.roi == null ? "-" : s.roi + "%"}</span><small class="block text-[10px] text-gray-400">${y}年 ${s.done}R</small></span></div>` +
+      `<div class="text-[11px] text-gray-500 mt-1 leading-relaxed">${e(t.cond)}</div></a>`;
+  };
+  const groups = CLS_ORDER.map(c => {
+    const ts = TIER_TABLE.filter(t => t.cls === c);
+    return ts.length ? `<div class="sec-h">${clsName(c)}</div><div class="grid gap-2">${ts.map(card).join("")}</div>` : "";
+  }).join("");
+  const matrix = `<div class="lst"><table class="w-full text-center text-[12px]"><tr class="text-[11px] text-gray-500"><th class="py-2 text-left pl-3 font-normal">クラス</th><th class="font-normal">芝</th><th class="font-normal">ダート</th></tr>` +
+    CLS_ORDER.map(c => `<tr class="border-t border-[#f0ebe0]"><td class="py-2 text-left pl-3 font-bold">${clsName(c)}</td>` + ["芝", "ダ"].map(sf => {
+      const ts = TIER_TABLE.filter(t => t.cls === c && (!t.surf || t.surf === sf));
+      return `<td>${ts.map(t => `<span class="tc tc-${t.tier} mx-0.5">${t.tier}</span>`).join("")}</td>`;
+    }).join("") + `</tr>`).join("") + `</table></div>`;
+  return `<div class="max-w-3xl"><h1 class="text-lg font-bold mb-1">推奨度の一覧</h1><div class="text-[12px] text-gray-500 mb-3">クラスと芝・ダートごとに、どの推奨度・買い目になるか。Cは上の条件に合わないときの推奨度。数字はアプリの${y}年の回収率で、押すと成績で詳しく見られます。1レース1,500円。</div>` +
+    matrix + groups + `</div>`;
+}
+
+const STATS_F = {tier: "SA", cls: "", surf: "", kind: "", period: ""};
+
+// 重賞ヒストリー（2026-11-21 利用者の希望）: データのある全期間。グレードは複数選べる。data/graded.json（share_export.graded_rows）
+const GRADE_F = new Set(["G1", "G2", "G3"]);
+let GRADE_LIMIT = 50;
+const YEAR_F = new Set();   // 空なら全期間（複数選べる）
+const GRADES = [["G1", "G1"], ["G2", "G2"], ["G3", "G3"], ["L", "リステッド"], ["OP", "OP特別"]];
+async function gradedSection() {
+  const all = await get("graded");
+  const allYears = [...new Set(all.map(x => x.d.slice(0, 4)))].sort().reverse();
+  const rows = all.filter(x => GRADE_F.has(x.g) && (!YEAR_F.size || YEAR_F.has(x.d.slice(0, 4))));
+  const bet = rows.filter(x => x.t && x.done && x.c > 0);
+  const cost = bet.reduce((a, x) => a + x.c, 0), ret = bet.reduce((a, x) => a + x.ret, 0), hits = bet.filter(x => x.ret > 0).length;
+  const roi = cost ? Math.round(ret / cost * 100) : null;
+  const first = all.length ? all[all.length - 1].d : "", last = all.length ? all[0].d : "";
+  const md = x => `${x.slice(0, 4)}/${+x.slice(4, 6)}/${+x.slice(6)}`;
+  const chips = `<div class="flex flex-wrap gap-1.5 mb-2">` + GRADES.map(([g, l]) =>
+    `<button type="button" data-g="${g}" class="gchip${GRADE_F.has(g) ? " on" : ""}"><span class="gb gb-${g}">${g === "OP" ? "OP" : g === "L" ? "L" : g}</span>${g === "L" || g === "OP" ? l : ""}</button>`).join("") + `</div>`;
+  const ychips = `<div class="flex flex-wrap gap-1.5 mb-2"><button type="button" data-y="" class="gchip${YEAR_F.size ? "" : " on"}" style="padding-left:10px">全期間</button>` +
+    allYears.map(y => `<button type="button" data-y="${y}" class="gchip${YEAR_F.has(y) ? " on" : ""}" style="padding-left:10px">${y}年</button>`).join("") + `</div>`;
+  const byG = GRADES.map(([g]) => [g, bet.filter(x => x.g === g)]).filter(([, xs]) => xs.length);
+  const gsum = byG.length > 1 ? `<div class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500 mb-2">` + byG.map(([g, xs]) => {
+    const c = xs.reduce((a, x) => a + x.c, 0), r = xs.reduce((a, x) => a + x.ret, 0);
+    return `<span><span class="gb gb-${g}">${g}</span> ${xs.length}R・的中${xs.filter(x => x.ret > 0).length}・<b class="${roiCls(c ? Math.round(r / c * 100) : null)}">${c ? Math.round(r / c * 100) : "-"}%</b></span>`;
+  }).join("") + `</div>` : "";
+  const sum = `<div class="stc mb-2 flex items-center gap-3"><div><div class="text-[11px] text-gray-500">回収率</div><div class="num text-2xl font-extrabold ${roiCls(roi)}">${roi ?? "-"}<span class="text-sm">%</span></div></div>` +
+    `<div class="text-[11px] text-gray-500 leading-relaxed">${bet.length}レース・的中${hits}回（${bet.length ? Math.round(hits / bet.length * 100) : 0}%）<br>収支 <span class="num font-bold ${ret - cost >= 0 ? "text-emerald-700" : ""}">${ret - cost >= 0 ? "+" : ""}${yen(ret - cost)}円</span></div></div>`;
+  const item = x => {
+    const res = !x.done ? `<span class="text-gray-400">結果待ち</span>` : !x.t ? `<span class="text-gray-400">推奨なし</span>` :
+      x.ret > 0 ? `<span class="text-red-600 font-bold">的中 ${yen(x.ret)}円</span>` : `<span class="text-gray-400">不的中</span>`;
+    const ax = x.a ? `◎${x.a} ${e(x.an || "")}${x.ao ? `（${x.ao}倍）` : ""}${x.af ? ` → <b class="${x.af <= 3 ? "text-red-600" : ""}">${x.af}着</b>` : ""}` : "";
+    return `<a id="hr-${x.d}-${PLACE[x.pl] || "00"}-${x.r}" href="#${x.hist ? "h" : "r"}-${x.d}-${PLACE[x.pl] || "00"}-${x.r}" class="hrow"><div class="flex items-center gap-1.5"><span class="gb gb-${x.g}">${x.g}</span><span class="font-bold text-[13px] truncate">${e(x.n || "")}</span>` +
+      `${x.t ? `<span class="tc tc-${x.t} ml-auto shrink-0">${x.t}</span>` : ""}</div>` +
+      `<div class="text-[11px] text-gray-500 mt-0.5">${md(x.d)} ${e(x.pl)} ${x.s === "芝" ? "芝" : "ダ"}${x.dist || ""}m${x.k ? `・${e(x.k)}` : ""}</div>` +
+      `<div class="text-[12px] mt-0.5 flex flex-wrap gap-x-2"><span>${ax}</span><span class="ml-auto">${res}</span></div>` +
+      (x.w ? `<div class="text-[10px] text-gray-400">1着 ${e(x.w)}${x.wo ? `（${x.wo}倍）` : ""}</div>` : "") + `</a>`;
+  };
+  const yrs = [...new Set(bet.map(x => x.d.slice(0, 4)))].sort().reverse();
+  const ysum = yrs.length > 1 ? `<div class="lst mb-2"><table class="w-full text-[12px]"><tr class="text-[11px] text-gray-500"><th class="py-1.5 pl-3 text-left font-normal">年</th><th class="font-normal">レース</th><th class="font-normal">的中</th><th class="font-normal">収支</th><th class="pr-3 text-right font-normal">回収率</th></tr>` +
+    yrs.map(y => { const xs = bet.filter(x => x.d.startsWith(y)), c = xs.reduce((a, x) => a + x.c, 0), r = xs.reduce((a, x) => a + x.ret, 0), q = r - c, ro = c ? Math.round(r / c * 100) : null;
+      return `<tr class="border-t border-[#f0ebe0]"><td class="py-1.5 pl-3">${y}${xs.some(x => x.hist) ? '<span class="text-[9px] text-gray-400 ml-1">再現</span>' : ""}</td><td class="text-center num">${xs.length}</td><td class="text-center num">${xs.filter(x => x.ret > 0).length}</td>` +
+        `<td class="text-center num ${q >= 0 ? "text-emerald-700" : "text-gray-500"}">${q >= 0 ? "+" : ""}${yen(q)}</td><td class="pr-3 text-right num font-bold ${roiCls(ro)}">${ro ?? "-"}%</td></tr>`; }).join("") + `</table></div>` : "";
+  const more = rows.length > GRADE_LIMIT ? `<button type="button" data-more class="w-full mt-2 stc text-[12px] font-bold text-[#9a7b2f]">もっと見る（残り${rows.length - GRADE_LIMIT}レース）</button>` : "";
+  return `<div class="sec-h" id="graded">重賞ヒストリー（${first ? `${md(first)}〜${md(last)}` : ""}）</div>${chips}${ychips}${sum}${gsum}${ysum}` +
+    (rows.length ? `<div class="lst hl">${rows.slice(0, GRADE_LIMIT).map(item).join("")}</div>${more}` : `<div class="stc text-gray-500">グレードを選んでください</div>`) +
+    `<div class="text-[11px] text-gray-500 mt-2">2025年までは、今の決め方で発走10分前のオッズから付け直した予想です（「再現」。2021年は天皇賞・秋（10/31）から）。能力の評価や見落とし度の重みは、この期間のデータも使って作っているので、当時に予想していたらここまでは当たらなかった可能性があります（特に2021年は能力を作った年です）。</div>`;
+}
+
+
+// 過去の重賞の出馬表（2026-11-21 利用者の希望）: data/graded_detail_<年>.json の [馬番, 馬名, 騎手, 単勝, 人気, 着順, ランク（能力）, 印, AI評価, 近走評価]（後ろ2つは 2026-11-22）
+let lastHist = "";
+async function histRacePage(date, code, rn, tab = "card") {
+  const pl = Object.keys(PLACE).find(k => PLACE[k] === code) || "";
+  const x = (await get("graded")).find(g => g.d === date && g.pl === pl && g.r === rn);
+  const det = (await get(`graded_detail_${date.slice(0, 4)}`))[`${date}-${pl}-${rn}`] || {h: [], tk: []};
+  lastHist = `${date}-${code}-${rn}`;
+  if (!x) return `<p class="text-gray-500">レースが見つかりません。<a href="#stats" class="text-blue-600 underline">成績へ</a></p>`;
+  document.title = `${x.n} ${date.slice(0, 4)}`;
+  const tot = det.tk.reduce((a, t) => a + t[3], 0);
+  const tk = [...new Set(det.tk.map(t => t[0]))].map(k => `<div><span class="font-bold mr-1">${e(k)}</span>` +
+    det.tk.filter(t => t[0] === k).map(t => `<span class="inline-block mr-2 num ${t[3] > 0 ? "text-red-600 font-bold" : "text-gray-700"}">${t[1].join("-")}${t[3] > 0 ? `（${yen(t[3])}円）` : ""}</span>`).join("") + `</div>`).join("");
+  const bet = x.t ? `<div class="stc mb-3"><div class="flex items-center gap-2 mb-1"><span class="tc tc-${x.t}">${x.t}</span><span class="font-bold">推奨買い目（${e(x.k)}）</span>` +
+    `<span class="ml-auto ${x.ret > 0 ? "text-red-600 font-bold" : "text-gray-400"}">${x.ret > 0 ? `的中 ${yen(x.ret)}円` : "不的中"}</span></div>` +
+    `<div class="text-[12px] leading-relaxed">${tk}</div><div class="text-[11px] text-gray-500 mt-1">${det.tk.length}点・計${yen(x.c)}円・払戻 ${yen(tot)}円</div></div>` :
+    `<div class="stc mb-3 text-gray-500">推奨なし（発走10分前のオッズが無い、または頭数が少ないレース）</div>`;
+  // 出馬表タブ（馬番順・着順なし）と結果タブ（着順順）。いつものレースと同じタブ（2026-11-21 利用者の希望）
+  const id = `h-${date}-${code}-${rn}`;
+  raceKey = id;
+  const tabs = `<div class="flex gap-1 border-b-2 border-[#2c3e50] mb-4"><a href="#${id}" class="tab${tab === "card" ? " tab-on" : ""}">出馬表</a><a href="#${id}-res" class="tab${tab === "res" ? " tab-on" : ""}">結果</a></div>`;
+  const crow = [...det.h].sort((a, b) => a[0] - b[0]).map(h => `<tr class="${h[7] === "◎" ? "ax" : ""}"><td class="num font-extrabold">${h[0]}</td><td><span class="m-${h[7]}">${h[7]}</span></td>` +
+    `<td class="nm pn" onclick="togglePast(${h[0]}, this)">${e(h[1] || "")}<span class="pt">過去走▼</span><small>${e(h[2] || "")}${h[9] ? `・近走<span class="${gcls(h[9])}">${e(h[9])}</span>` : ""}</small></td><td class="num font-bold">${h[3] ?? "-"}</td><td class="num">${h[4] ?? "-"}</td><td class="font-bold">${gcell(h[6])}</td><td class="font-bold">${gcell(h[8])}</td></tr>`).join("");
+  pastSrc = `data/hpast/${date}-${code}-${rn}.json`;   // 過去の重賞の過去走（app/hist_past_export.py。2023年までは枠・斤量・通過順・体重が無い）
+  const card = `<table class="htbl"><tr><th>番</th><th>印</th><th style="text-align:left">馬名</th><th>単勝</th><th>人気</th><th>能力</th><th>AI</th></tr>${crow}</table>`;
+  return `<div class="max-w-3xl"><div class="mb-3"><a href="#stats" class="text-blue-600 hover:underline text-xs">◀ 重賞ヒストリーへ</a></div>` +
+    `<div class="text-gray-500 text-sm mb-1">${jpDate(date)}　${e(pl)}${rn}R</div>` +
+    `<h1 class="text-xl font-bold flex flex-wrap items-center gap-2 mb-1"><span class="gb gb-${x.g}">${x.g}</span>${e(x.n || "")}</h1>` +
+    `<div class="text-gray-600 text-sm mb-3">${x.s === "芝" ? "芝" : "ダート"}${x.dist || ""}m / ${det.h.length}頭</div>${tabs}` +
+    (tab === "res" ? bet + histResult(x, det) : `${card}<div class="sec-h">AIの印と買い目</div>${bet.replace(/<span class="ml-auto[^>]*>[^<]*<\/span>/, "")}`) +
+    `<div class="text-[11px] text-gray-500 mt-2">今の決め方で、発走10分前のオッズから付け直した予想です（再現）。馬名を押すと過去走が出ます。${tab === "res" ? "着順の表の単勝・人気は確定。" : "単勝は発走10分前のオッズ（無ければ確定）、人気はその順。"}能力＝能力の評価、AI＝能力に見落とし度を足した総合（10分前オッズが無いレースは能力と同じ）、近走＝近3走の評価のまとめ。どれも S〜C。</div></div>`;
+}
+
+
+// 過去の重賞の結果タブ（2026-11-21 利用者の希望: いつものレースの結果と同じ中身）。resultTab に渡せる形に組み直す
+// det.hr = {馬番: [タイム, 着差, 通過, 上がり3F, 馬体重, PCI, 確定人気, 確定単勝]}、det.rc = レースの流れ・ラップ・通過順・払戻（share_export）
+const wakuOf = (n, heads) => {   // JRA の枠の決め方: 8頭までは馬番＝枠、それより多いと外の枠から2頭（3頭）になる
+  if (heads <= 8) return n;
+  const base = Math.floor(heads / 8), rem = heads % 8;
+  let c = 0;
+  for (let w = 1; w <= 8; w++) { c += base + (w > 8 - rem ? 1 : 0); if (n <= c) return w; }
+  return 8;
+};
+function histResult(x, det) {
+  if (!det.rc && !Object.keys(det.hr || {}).length) return `<div class="sec-h">着順</div><p class="text-gray-500">結果の詳しいデータがありません。</p>`;
+  const heads = det.h.length;
+  const horses = det.h.map(h => {
+    const v = (det.hr || {})[h[0]] || [];
+    return {num: h[0], name: h[1], jockey: h[2], odds: h[3], pop: h[4], fin: h[5], grade: h[6], mark: h[7], waku: wakuOf(h[0], heads),
+            time: v[0], margin: v[1], pos: v[2], l3f: v[3], weight: v[4], hpci: v[5], rpop: v[6], odds_final: v[7]};
+  });
+  return resultTab({horses, surface: x.s === "芝" ? "芝" : "ダート", result: {race: det.rc || {}}, ev: det.ev});
+}
+
+async function statsPage() {
+  document.title = "成績";
+  const all = await get("bets");
+  const years = [...new Set(all.map(x => x[0].slice(0, 4)))].sort().reverse();
+  if (!STATS_F.period) STATS_F.period = "y" + (years[0] || "");
+  const kinds = [...new Set(all.map(x => x[6]).filter(Boolean))].sort();
+  const label = {tier: "推奨度", cls: "クラス", surf: "芝・ダート", kind: "券種", period: "期間"};
+  const sel = (k, opts) => `<label class="fsel"><span>${label[k]}</span><select data-f="${k}">` +
+    opts.map(([v, l]) => `<option value="${v}"${STATS_F[k] === v ? " selected" : ""}>${l}</option>`).join("") + `</select></label>`;
+  const since = n => { const x = new Date(); x.setDate(x.getDate() - n); return `${x.getFullYear()}${String(x.getMonth() + 1).padStart(2, "0")}${String(x.getDate()).padStart(2, "0")}`; };
+  const p = STATS_F.period;
+  const inP = x => !p || p === "all" ? true : p[0] === "y" ? x[0].startsWith(p.slice(1)) : x[0] >= since(+p.slice(1));
+  const rows = all.filter(x => inP(x) && (STATS_F.tier === "" || (STATS_F.tier === "SA" ? ["S", "A"].includes(x[5]) : x[5] === STATS_F.tier)) &&
+    (!STATS_F.cls || x[3] === STATS_F.cls) && (!STATS_F.surf || x[4] === STATS_F.surf) && (!STATS_F.kind || x[6] === STATS_F.kind));
+  const s = sumRows(rows);
+  const filters = `<div class="fbox">` +
+    sel("tier", [["", "すべて"], ["SA", "S・A"], ["S", "S"], ["A", "A"], ["B", "B"], ["C", "C"]]) +
+    sel("cls", [["", "すべて"], ...CLS_ORDER.map(c => [c, clsName(c)])]) +
+    sel("surf", [["", "すべて"], ["芝", "芝"], ["ダ", "ダート"]]) +
+    sel("kind", [["", "すべて"], ...kinds.map(k => [k, k])]) +
+    sel("period", [...years.map(y => ["y" + y, y + "年"]), ["d90", "直近3か月"], ["d30", "直近1か月"], ["all", "全期間"]]) + `</div>`;
+  const kpi = (lab, val, sub = "") => `<div class="stc"><div class="text-[11px] text-gray-500">${lab}</div><div class="num text-base font-extrabold">${val}</div>${sub ? `<div class="text-[10px] text-gray-400">${sub}</div>` : ""}</div>`;
+  const pl = s.ret - s.cost;
+  const big = `<div class="hero mb-3"><div class="text-[11px] tracking-widest text-gray-300">回収率</div><div class="num text-4xl font-black mt-1" style="color:${s.roi >= 100 ? "var(--gold2)" : "#fff"}">${s.roi == null ? "-" : s.roi}<span class="text-lg">%</span></div>` +
+    `<div class="text-[12px] text-gray-300 mt-1">${s.done}レース・的中${s.hits}回（${s.done ? Math.round(s.hits / s.done * 100) : 0}%）・収支 <span class="num">${pl >= 0 ? "+" : ""}${yen(pl)}</span>円</div></div>`;
+  const kpis = `<div class="grid grid-cols-3 gap-2 mb-3">${kpi("投資", yen(s.cost) + "円")}${kpi("払戻", yen(s.ret) + "円")}${kpi("最大連敗", s.worst + "回", s.n > s.done ? `結果待ち ${s.n - s.done}R` : "")}</div>`;
+  const byTier = ["S", "A", "B", "C"].map(t => [t, sumRows(rows.filter(x => x[5] === t))]).filter(([, x]) => x.n);
+  const bt = byTier.length > 1 ? `<div class="sec-h">推奨度ごと</div><div class="grid grid-cols-2 gap-2">${byTier.map(([t, x]) => `<div class="stc flex items-center gap-2"><span class="tc tc-${t}">${t}</span><span class="text-[11px] text-gray-500">${x.done}R・的中${x.hits}</span><span class="ml-auto num font-extrabold ${roiCls(x.roi)}">${x.roi == null ? "-" : x.roi + "%"}</span></div>`).join("")}</div>` : "";
+  const months = [...new Set(rows.map(x => x[0].slice(0, 6)))].sort().reverse();
+  const mt = months.length ? `<div class="sec-h">月ごと</div><div class="lst"><table class="w-full text-[12px]"><tr class="text-[11px] text-gray-500"><th class="py-2 pl-3 text-left font-normal">月</th><th class="font-normal">レース</th><th class="font-normal">的中</th><th class="font-normal">収支</th><th class="pr-3 text-right font-normal">回収率</th></tr>` +
+    months.map(m => { const x = sumRows(rows.filter(r => r[0].startsWith(m))), q = x.ret - x.cost; return `<tr class="border-t border-[#f0ebe0]"><td class="py-2 pl-3">${m.slice(0, 4)}/${+m.slice(4)}</td><td class="text-center num">${x.done}</td><td class="text-center num">${x.hits}</td>` +
+      `<td class="text-center num ${q >= 0 ? "text-emerald-700" : "text-gray-500"}">${q >= 0 ? "+" : ""}${yen(q)}</td><td class="pr-3 text-right num font-bold ${roiCls(x.roi)}">${x.roi == null ? "-" : x.roi + "%"}</td></tr>`; }).join("") + `</table></div>` : `<div class="stc text-gray-500">この条件のレースはありません</div>`;
+  return `<div class="max-w-3xl"><h1 class="text-lg font-bold mb-3">成績</h1>${filters}${big}${kpis}${bt}${mt}` +
+    `<div class="text-[11px] text-gray-500 mt-3">1レース1,500円。過去の日付は今の決め方で付け直した買い目（発走10分前のオッズ）で数えています。</div>${await gradedSection()}</div>`;
+}
+
+async function home() {
+  const days = await get("days");
+  const cur = currentDate(days.map(x => x.date));
+  const d = cur ? await get(cur) : {races: []};
+  const today = todayStr(), isToday = cur === today;
+  const places = [...new Set(d.races.map(r => r.place))];
+  const cnt = t => d.races.filter(r => r.bet_v && vn(r.bet_v.tier) === t).length;
+  const doneSA = d.races.filter(r => r.bet_v && ["新S", "新A"].includes(r.bet_v.tier) && (r.result || {}).v);
+  const dayPL = doneSA.reduce((a, r) => a + r.result.v.ret - r.result.v.cost, 0);
+  const rows = await get("bets"), y = today.slice(0, 4);
+  const sy = ts => sumRows(rows.filter(x => x[0].startsWith(y) && ts.includes(x[5])));
+  const wd = cur ? WEEK[new Date(+cur.slice(0, 4), +cur.slice(4, 6) - 1, +cur.slice(6)).getDay()] : "";
+  const head = `<div class="mb-3"><div class="text-[11px] tracking-[.2em] text-[#9a7b2f] font-bold">${isToday ? "TODAY" : cur > today ? "NEXT RACE DAY" : "LAST RACE DAY"}</div>` +
+    `<div class="text-2xl font-black text-[#0f1b2d] mt-0.5">${cur ? `${+cur.slice(4, 6)}月${+cur.slice(6)}日<span class="text-base font-bold ml-1">（${wd}）</span>` : "開催なし"}</div>` +
+    `<div class="text-[12px] text-gray-500">${places.map(e).join("・")} ${d.races.length}レース</div></div>`;
+  const chips = `<a href="#d-${cur}" class="chips mb-3">${["S", "A", "B", "C"].map(t => `<div><span class="tc tc-${t}">${t}</span><span class="num font-extrabold text-lg ml-1">${cnt(t)}</span><small>R</small></div>`).join("")}` +
+    `<div class="ml-auto text-[11px] text-[#9a7b2f] font-bold">レース一覧 ›</div></a>` +
+    (doneSA.length ? `<div class="text-[12px] text-gray-600 -mt-1 mb-3 pl-1">この日の推奨度S・A：${doneSA.length}レース終了・収支 <span class="num font-bold ${dayPL >= 0 ? "text-emerald-700" : ""}">${dayPL >= 0 ? "+" : ""}${yen(dayPL)}円</span></div>` : "");
+  const card = (lab, t, x) => `<a href="#stats" data-sf="${sfAttr({tier: t, cls: "", surf: "", kind: "", period: "y" + y})}" class="stc block"><div class="text-[11px] text-gray-500 flex items-center gap-1 h-5">${lab}</div>` +
+    `<div class="num text-2xl font-extrabold ${roiCls(x.roi)}">${x.roi ?? "-"}<span class="text-sm">%</span></div><div class="text-[10px] text-gray-400">${x.done}R・的中${x.hits}回</div></a>`;
+  const kpis = `<div class="sec-h">${y}年の回収率</div><div class="grid grid-cols-3 gap-2">${card('<span class="tc tc-S">S</span>', "S", sy(["S"]))}${card('<span class="tc tc-A">A</span>', "A", sy(["A"]))}${card("全推奨度", "", sy(["S", "A", "B", "C"]))}</div>`;
+  const menu = `<div class="sec-h">メニュー</div><div class="grid grid-cols-2 gap-2">` +
+    [[`#d-${cur}`, "レース一覧", places.join("・") || "-"], ["#tiers", "推奨度の一覧", "クラス×芝ダートの推奨度"], ["#stats", "成績を調べる", "条件で絞って回収率"], ["#days", "開催日の一覧", "これまでの開催と成績"]]
+      .map(([h, t, s]) => `<a href="${h}" class="stc block"><div class="font-bold text-[13px] text-[#0f1b2d]">${t} <span class="text-[#c9a24b]">›</span></div><div class="text-[11px] text-gray-500 mt-0.5">${e(s)}</div></a>`).join("") + `</div>`;
+  document.title = "AI競馬予想";
+  return `<div class="max-w-3xl">${head}${chips}${await nextPicks(days)}${kpis}${menu}` +
+    `<div class="text-[10px] text-gray-400 mt-4 leading-relaxed">予想と結果の表示だけで、馬券の購入をすすめるものではありません。<a href="#about" class="underline">説明</a></div></div>`;
+}
+
+const NAV_BTN = "px-3 py-1.5 bg-white border border-gray-300 rounded text-xs font-bold text-[#2c3e50]";
+// 開催日の移動（1日前の開催／日付選択／1日後の開催）
+async function dayNav(date) {
+  const ds = (await get("days")).map(x => x.date).sort();
+  const i = ds.indexOf(date), md = x => `${+x.slice(4, 6)}/${+x.slice(6)}`;
+  const btn = (x, label) => x ? `<a href="#d-${x}" class="${NAV_BTN} hover:bg-yellow-50 whitespace-nowrap">${label}</a>` : `<span class="${NAV_BTN} opacity-40 whitespace-nowrap">${label}</span>`;
+  const prev = ds[i - 1], next = ds[i + 1];
+  return `<div class="flex flex-wrap items-center gap-2 mb-3">${btn(prev, `◀ 1日前の開催${prev ? `（${md(prev)}）` : ""}`)}` +
+    `<select data-nav aria-label="開催日を選ぶ" class="${NAV_BTN}">${[...ds].reverse().map(x => `<option value="d-${x}"${x === date ? " selected" : ""}>${jpDate(x)}</option>`).join("")}</select>` +
+    `${btn(next, `1日後の開催${next ? `（${md(next)}）` : ""} ▶`)}</div>`;
+}
+// 出馬表の上のレース移動（同じ日の全開催を場ごとに1R〜12Rのボタンで）。結果タブを見ているときは移動先も結果タブ
+function raceNav(date, d, cur, tab) {
+  const rows = [...new Set(d.races.map(x => x.place))].map(pl => {
+    const btns = d.races.filter(x => x.place === pl).sort((a, b) => a.race - b.race).map(x => {
+      const on = x === cur;
+      return `<a href="#${raceId(date, x)}${tab === "res" && x.result ? "-res" : ""}"${on ? ' aria-current="page"' : ""} class="block text-center py-1 rounded text-xs font-bold border ${on ? "bg-[#2c3e50] text-white border-[#2c3e50]" : "bg-white text-[#2c3e50] border-gray-300 hover:bg-yellow-50"}">${x.race}</a>`;
+    }).join("");
+    return `<div class="flex items-center gap-2"><span class="w-9 shrink-0 text-xs font-bold ${pl === cur.place ? "text-[#2c3e50]" : "text-gray-500"}">${e(pl)}</span><div class="grid grid-cols-12 gap-0.5 md:gap-1 flex-1 max-w-[520px]">${btns}</div></div>`;
+  }).join("");
+  return `<div class="grid gap-1 mb-4">${rows}</div>`;
+}
+
+async function dayPage(date) {
+  const d = await get(date);
+  const vDay = t => vStats(d, t).bets ? `<div class="${VT[t].text}">${statsText(vStats(d, t), "推奨度" + vn(t))}</div>` +
+    (vStats(d, t, "v_alt").bets ? `<div class="${VT[t].text}">${statsText(vStats(d, t, "v_alt"), "推奨度" + vn(t) + "（3連複）")}</div>` : "") : "";
+  const places = [...new Set(d.races.map(r => r.place))];
+  const cols = places.map(pl => {
+    const rs = d.races.filter(r => r.place === pl).sort((a, b) => a.race - b.race);
+    const r0 = rs.find(r => r.kai) || rs[0];
+    const head = r0.kai ? `${r0.kai}回 <span class="text-base mx-0.5">${e(pl)}</span> ${r0.nichi}日目` : `<span class="text-base">${e(pl)}</span>`;
+    const turf = (rs.find(r => r.surface === "芝" && r.track) || {}).track || "-";
+    const dirt = (rs.find(r => r.surface === "ダート" && r.track) || {}).track || "-";
+    const cards = rs.map(r => {
+      let rec = pending(r) ? '<span class="text-[10px] text-gray-500 bg-gray-100 border border-gray-200 px-1 rounded"><span class="md:hidden">準備中</span><span class="hidden md:inline">対応をお待ちください</span></span>' :
+                (r.bet ? `<span class="${TIER[tierOf(r)].badge}">${TIER[tierOf(r)].name}</span> ` : "") +
+                (r.bets_a ? `<span class="badge-tiera">推奨度A</span> ` : "") +
+                (r.bet_v ? `<span class="${VT[vTierOf(r)].badge}">推奨度${vn(vTierOf(r))}</span>` : "") +
+                (noBet(r) ? `<span class="text-[10px] text-gray-400">${skipLabel(r)}</span>` : "");
+      const res = r.result || {};
+      const vHit = (x, lab) => x.ret ? ` <span class="text-[11px] font-bold text-red-600">${lab}的中 ${yen(x.ret)}円</span>` : ` <span class="text-[11px] text-gray-400">${lab}不的中</span>`;
+      if (r.bet_v && res.v) rec += res.v_alt && r.bet_v.tickets_alt
+        ? `<span class="block leading-tight">${vHit(res.v, "馬連：")}</span><span class="block leading-tight">${vHit(res.v_alt, "3連複：")}</span>` : vHit(res.v, "");
+      if (r.bet && "bet_return" in res)
+        rec += res.bet_return ? ` <span class="text-[11px] font-bold text-red-600">的中 ${yen(res.bet_return)}円</span>` : ' <span class="text-[11px] text-gray-400">不的中</span>';
+      const ra = Object.values(res.a || {});
+      const raRet = ra.reduce((a, x) => a + x.ret, 0);
+      if (ra.length) rec += raRet ? ` <span class="text-[11px] font-bold text-red-600">的中 ${yen(raRet)}円</span>` : ' <span class="text-[11px] text-gray-400">不的中</span>';
+      // 競馬場を横に並べる。スマホでは列が細いので、R番号を小さくし、レース名・条件を縦に積む
+      const tl = tierLetter(r);
+      const chip = pending(r) ? '<span class="text-[9px] text-gray-400">準備中</span>' : tl ? `<span class="tc tc-${tl}">${tl}</span>` : "";
+      // 2026-11-19 利用者の希望: レースが終わったら推奨の結果（的中と払戻・不的中）をマスに出す。明るいマスは推奨度S・Aだけ。S・Aの的中は赤いマス、B・Cの的中は白いマスに赤字だけ
+      const vr = r.bet_v && (r.result || {}).v, vret = vr ? vr.ret + (((r.result || {}).v_alt || {}).ret || 0) : 0;
+      const resLine = vr ? (vret > 0 ? `<small class="rs hit">的中 ${yen(vret)}円</small>` : `<small class="rs">不的中</small>`) : "";
+      const mcell = `<a href="#${raceId(date, r)}" class="mcell${["S", "A"].includes(tl) ? (vret > 0 ? " mh" : " ms") : r.result && !(vret > 0) ? " md" : ""}"><span class="r">${r.race}</span>` +
+        `<span class="c"><span class="n">${e(r.full_name || raceNameOnly(r.name) || r.name || r.class || "")}</span>` +
+        ((r.full_name || raceNameOnly(r.name)) && r.class ? `<small class="k">${e(r.class)}</small>` : "") +
+        `<small>${r.start ? `<b class="st">${e(r.start)}</b> ` : ""}${surfShort(r.surface)}${r.distance || ""}</small>${resLine}</span>${chip}</a>`;   // 2026-11-21 利用者の希望: 発走時刻
+      return mcell + `<a href="#${raceId(date, r)}" class="dcard flex-1 border-b border-gray-100 p-1 md:p-2 flex gap-1 md:gap-2 hover:bg-gray-50${r.bet || r.bets_a || (r.bet_v && !["新C", "新D"].includes(r.bet_v.tier)) ? " highlight-race my-0.5 rounded-sm" : ""}">` +
+        `<div class="race-number">${r.race}R</div><div class="flex-1 min-w-0">` +
+        `<div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5"><span class="font-bold truncate max-w-full">${e(r.full_name || r.name)}</span>${classBadge(r)}</div>` +
+        `<div class="flex flex-col md:flex-row md:justify-between md:items-end mt-0.5 md:mt-1 gap-0.5"><span>${rec}</span><span class="text-gray-500 text-[10px] md:text-[11px] leading-tight">` +
+        `${e(r.start || "")} ${surfShort(r.surface)}${r.distance || ""}m ${r.heads}頭</span></div></div></a>`;
+    });
+    return {head: `<div class="bg-white border-t-[3px] border-gray-300 px-1 md:px-2 pt-2 md:pt-3 pb-2 border-b border-dashed border-gray-400 text-center">` +
+              `<div class="font-bold text-gray-700 tracking-wide text-[11px] md:text-[13px]">${head}</div>` +
+              `<div class="text-gray-500 text-[10px] md:text-xs mt-1">芝：${e(turf)}　ダ：${e(dirt)}</div></div>`,
+            cards: Object.fromEntries(rs.map((r, i) => [r.race, cards[i]]))};
+  });
+  // 競馬場を横に並べ、同じR番号のレースを同じ行にそろえる（行の高さは、その行で一番高いレースに合わせる。2026-11-08 利用者の判断）
+  const maxR = Math.max(...d.races.map(r => r.race));
+  const grid = cols.map(c => c.head).join("") +
+    Array.from({length: maxR}, (_, i) => cols.map(c => `<div class="bg-white flex flex-col">${c.cards[i + 1] || ""}</div>`).join("")).join("");
+  document.title = `${jpDate(date)} レース一覧`;
+  return `<div class="mb-3"><a href="#days" class="text-blue-600 hover:underline text-xs">◀ 開催日の一覧へ</a></div>` + await dayNav(date) +
+    `<h1 class="text-lg font-bold mb-1">${jpDate(date)}のレース</h1><div class="text-sm mb-3">${statsText(addStats(betStats(d, "S"), vStats(d, "新S")), "推奨度S")}${addStats(aStatsOf(d), betStats(d, "SD"), vStats(d, "新A")).bets ? `<div class="text-violet-700">${statsText(addStats(aStatsOf(d), betStats(d, "SD"), vStats(d, "新A")), "推奨度A")}</div>` : ""}${betStats(d, "B").bets ?`<div class="text-sky-700">${statsText(betStats(d, "B"), "推奨度B")}</div>` : ""}${betStats(d, "B2").bets ?`<div class="text-sky-700">${statsText(betStats(d, "B2"), "推奨度B（未勝利）")}</div>` : ""}` +
+    vDay("新B") + vDay("新C") +
+    "</div>" +
+    `<div class="overflow-x-auto -mx-3 px-1 md:mx-0 md:px-0"><div class="day-grid shadow-sm" style="--n:${cols.length}">${grid}</div></div>`;
+}
+
+// ---------------------------------------------------------------- 出馬表・結果（タブ）と並び替え
+const MARK_ORD = {"◎": 0, "○": 1, "▲": 2, "△": 3, "☆": 4, "": 5, "消": 6};
+const GRADE_ORD = {"S": 0, "A": 1, "B+": 2, "B-": 3, "C": 4, "消": 5};
+const DAY_ORD = {"合う": 0, "普通": 1, "合わない": 2};
+const MEDAL = {1: "bg-yellow-300", 2: "bg-gray-300", 3: "bg-orange-300"};
+const TD = 'class="border border-gray-300';
+const num = x => { const v = parseFloat(x); return isNaN(v) ? null : v; };
+const secs = t => { if (!t) return null; const [a, b] = String(t).includes(":") ? String(t).split(":") : [0, t]; return +a * 60 + +b; };
+const lastPos = p => p ? +String(p).split("-").pop() : null;
+const pct = x => x != null ? (x * 100).toFixed(0) + "%" : "-";
+const markHtml = mk => mk ? `<span class="m-${mk}">${mk}</span>` : '<span class="text-gray-300">-</span>';
+const finHtml = h => `<td ${TD} font-bold ${MEDAL[h.fin] || ""}">${h.fin || "除外"}</td>`;
+const wakuHtml = h => { const w = String(h.waku ?? "").trim(); return `<td ${TD} waku-${e(w)} font-bold">${e(w)}</td>`; };
+
+// 列の定義: [キー, 見出し, 見出しの色, 並び替えの値, セルのHTML]
+function cardCols(r) {
+  const cols = [];
+  if (r.result) cols.push(["fin", "着順", "", h => h.fin || 99, finHtml]);
+  cols.push(
+    ["waku", "枠", "", h => num(h.waku), wakuHtml],
+    ["num", "馬番", "", h => h.num, h => `<td ${TD} bg-gray-50 font-bold">${h.num}</td>`],
+    ["mark", "AI印", "text-yellow-300", h => MARK_ORD[h.mark || ""], h => `<td ${TD}">${markHtml(h.mark)}</td>`],
+    ["name", "馬名", "min-w-[120px]", h => h.name, h => `<td ${TD} font-bold text-left px-3 whitespace-nowrap pn" onclick="togglePast(${h.num}, this)">${e(h.name)}<span class="pt">過去走▼</span></td>`],
+    ["age", "性齢", "", h => h.age, h => `<td ${TD}">${e(h.sex || "")}${h.age || ""}</td>`],
+    ["kg", "斤量", "", h => num(h.kg), h => `<td ${TD}">${e(h.kg || "")}</td>`],
+    ["jockey", "騎手", "", h => h.jockey, h => `<td ${TD} whitespace-nowrap">${e(h.jockey || "")}</td>`],
+    ["odds", "単勝(人気)", "", h => h.odds, h => {
+      let o = h.odds ? `${h.odds}<span class="text-[10px] text-gray-500">(${h.pop})</span>` : "-";
+      if (h.odds_final && h.odds && Math.abs(h.odds_final - h.odds) >= 0.05) o += `<span class="block text-[10px] text-gray-400">確定 ${h.odds_final}</span>`;
+      return `<td ${TD}">${o}</td>`; }],
+    ["grade", "能力", "bg-gray-600", h => GRADE_ORD[h.grade], h => `<td ${TD} bg-gray-50 font-bold">${gcell(h.grade)}</td>`],
+    ["ai", "AI評価", "bg-gray-700", h => GRADE_ORD[h.ai], h => `<td ${TD} bg-gray-50 font-bold">${gcell(h.ai)}</td>`],
+    ["rec", "近走評価", "bg-gray-600", h => GRADE_ORD[h.rec], h => `<td ${TD} bg-gray-50 font-bold">${gcell(h.rec)}</td>`],
+    ["day", "展開", "bg-gray-600", h => DAY_ORD[h.day], h => `<td ${TD} bg-gray-50 whitespace-nowrap">${
+      {"合う": '<span class="text-green-700 font-bold">合う</span>', "合わない": '<span class="text-red-500">合わない</span>', "普通": '<span class="text-gray-500">普通</span>'}[h.day] || '<span class="text-gray-300">-</span>'}</td>`],
+    ["prob", "適合度", "bg-gray-700 text-yellow-100", h => h.prob != null ? -h.prob : null, h => `<td ${TD} bg-yellow-50">${pct(h.prob)}</td>`],
+    ["value", "期待値", "bg-gray-700 text-blue-100", h => h.value != null ? -h.value : null, h => {
+      const v = h.value;
+      return `<td ${TD} bg-blue-50">${v && v >= 1 && ["S", "A", "B+"].includes(h.grade) ? `<span class="font-bold text-blue-600">${pct(v)}</span>` : v ? `<span class="text-gray-500">${pct(v)}</span>` : "-"}</td>`; }],
+    ["mratio", "見落とし度", "bg-gray-700 text-amber-100", h => h.mratio != null ? -h.mratio : null, h => {
+      const v = h.mratio;
+      return `<td ${TD} bg-amber-50">${v == null ? "-" : v >= 1.1 ? `<span class="font-bold text-amber-700">${v.toFixed(2)}</span>` : `<span class="text-gray-600">${v.toFixed(2)}</span>`}</td>`; }],
+    ["pts", "総合評価", "bg-gray-800 text-orange-200", h => h.pts != null ? -h.pts : null, h => {
+      const p = h.pts;
+      return `<td ${TD} bg-orange-50">${p != null && p >= 75 ? `<span class="font-bold text-red-600 text-[15px]">${p}</span>` : p != null ? `<span class="font-bold text-gray-700">${p}</span>` : "-"}</td>`; }],
+    ["zi", "ZI", "text-green-300", h => h.zi != null ? -h.zi : null, h => `<td ${TD} text-green-700">${h.zi != null ? Math.round(h.zi) : "-"}</td>`],
+    ["sire", "血統（父／母父）", "min-w-[130px]", h => h.sire, h => `<td ${TD} text-[11px] text-left px-2 leading-tight py-1">${e(h.sire || "")}<br><span class="text-gray-500">${e(h.damsire || "")}</span></td>`]);
+  return cols;
+}
+
+function resCols(r) {
+  const best = Math.min(...r.horses.map(h => h.l3f || 99));
+  return [
+    ["fin", "着順", "", h => h.fin || 99, finHtml],
+    ["waku", "枠", "", h => num(h.waku), wakuHtml],
+    ["num", "馬番", "", h => h.num, h => `<td ${TD} bg-gray-50 font-bold">${h.num}</td>`],
+    ["mark", "AI印", "text-yellow-300", h => MARK_ORD[h.mark || ""], h => `<td ${TD}">${markHtml(h.mark)}</td>`],
+    ["name", "馬名", "min-w-[120px]", h => h.name, h => `<td ${TD} font-bold text-left px-3 whitespace-nowrap pn" onclick="togglePast(${h.num}, this)">${e(h.name)}<span class="pt">過去走▼</span></td>`],
+    ["grade", "能力", "", h => GRADE_ORD[h.grade], h => `<td ${TD} font-bold">${gcell(h.grade)}</td>`],
+    ["ai", "AI評価", "", h => GRADE_ORD[h.ai], h => `<td ${TD} font-bold">${gcell(h.ai)}</td>`],
+    ["rec", "近走評価", "", h => GRADE_ORD[h.rec], h => `<td ${TD} font-bold">${gcell(h.rec)}</td>`],
+    ["time", "タイム", "", h => secs(h.time), h => `<td ${TD}">${e(h.time || "-")}</td>`],
+    ["margin", "着差(秒)", "", h => num(h.margin), h => `<td ${TD}">${e(h.margin ?? "-")}</td>`],
+    ["pos", "通過", "", h => lastPos(h.pos), h => `<td ${TD} whitespace-nowrap">${e(h.pos || "-")}</td>`],
+    ["l3f", "上がり3F", "", h => h.l3f, h => `<td ${TD} ${h.l3f && h.l3f === best ? "font-bold text-red-600" : ""}">${h.l3f ?? "-"}</td>`],
+    ["rpop", "人気", "", h => h.rpop || h.pop, h => `<td ${TD}">${h.rpop || h.pop || "-"}</td>`],
+    ["odds_final", "単勝", "", h => h.odds_final || h.odds, h => `<td ${TD}">${h.odds_final || h.odds || "-"}</td>`],
+    ["weight", "馬体重", "", h => num(h.weight), h => `<td ${TD}">${e(h.weight || "-")}</td>`],
+    ["jockey", "騎手", "", h => h.jockey, h => `<td ${TD} whitespace-nowrap">${e(h.jockey || "")}</td>`],
+    ["hpci", "PCI", "", h => h.hpci, h => `<td ${TD}">${h.hpci ?? "-"}</td>`],
+  ];
+}
+
+let SORT = {view: "", key: "", dir: 1};
+
+function sortTable(cols, horses, view, defKey, minW) {
+  if (SORT.view !== view) SORT = {view, key: defKey, dir: 1};
+  const col = cols.find(c => c[0] === SORT.key) || cols.find(c => c[0] === defKey);
+  const rows = [...horses].sort((a, b) => {
+    const x = col[3](a), y = col[3](b);
+    if (x == null && y == null) return a.num - b.num;
+    if (x == null) return 1;
+    if (y == null) return -1;
+    const c = typeof x === "string" ? x.localeCompare(y, "ja") : x - y;
+    return c * SORT.dir || a.num - b.num;
+  });
+  const th = cols.map(c => {
+    const on = c[0] === col[0];
+    return `<th data-sort="${c[0]}" class="border border-gray-400 py-2 px-1 ${c[2]}${on ? " sort-on" : ""}">${c[1]}<span class="sort-ind">${on ? (SORT.dir > 0 ? "▲" : "▼") : "⇅"}</span></th>`;
+  }).join("");
+  return `<div class="overflow-x-auto"><table class="w-full ${minW} border-collapse border border-gray-300 text-center mb-4">` +
+    `<thead class="table-header text-xs whitespace-nowrap"><tr>${th}</tr></thead><tbody class="text-sm">` +
+    rows.map(h => `<tr class="hover:bg-gray-50${view.endsWith("card") && h.mark === "◎" ? " row-axis" : ""}">${cols.map(c => c[4](h)).join("")}</tr>`).join("") +
+    `</tbody></table></div>`;
+}
+
+function payTable(pays) {
+  const rows = Object.entries(pays || {}).map(([k, items]) =>
+    `<tr><th class="border border-gray-300 bg-gray-100 px-3 py-1 whitespace-nowrap text-left">${k}</th><td class="border border-gray-300 px-3 py-1 text-left">` +
+    items.map(t => `<span class="inline-block mr-4 whitespace-nowrap"><b>${t.nums.join(k === "馬単" || k === "3連単" ? "→" : "-")}</b> ${yen(t.pay)}円<span class="text-[11px] text-gray-500">（${t.pop ?? "-"}人気）</span></span>`).join("") +
+    `</td></tr>`).join("");
+  return rows ? `<table class="w-full border-collapse border border-gray-300 text-sm mb-4">${rows}</table>` : '<p class="text-gray-500 mb-4">払戻のデータがありません。</p>';
+}
+
+// どういうレースだったかとレース評価（2026-11-21 利用者の希望。app/race_eval_export.py → share_export が r.ev に入れる）
+function evSection(r) {
+  const v = r.ev;
+  if (!v) return r.result ? `<h2 class="font-bold mb-2">このレースの内容と評価</h2><div class="stc mb-4 text-[12px] text-gray-500">レースの内容とレース評価は、成績データを取り込んだあとに出ます。</div>` : "";
+  const rk = v.rk ? `<span class="gr gr-${v.rk.replace("+", "p").replace("-", "m")} evrk">${e(v.rk)}</span>` : "";
+  return `<h2 class="font-bold mb-2">このレースの内容と評価</h2><div class="stc mb-4">` +
+    (rk ? `<div class="flex items-center gap-2 mb-1.5"><span class="text-[11px] text-gray-500">レース評価</span>${rk}<span class="font-bold text-[13px]">${e(v.vd || "")}</span></div>` : "") +
+    `<div class="text-[13px] leading-relaxed">${e(v.flow || "")}${e(v.fin || "")}</div>` +
+    (v.lv && v.lv.length ? `<ul class="text-[12px] text-gray-600 mt-1.5 leading-relaxed list-disc pl-4">${v.lv.map(x => `<li>${e(x)}</li>`).join("")}</ul>` : "") +
+    `<div class="text-[10px] text-gray-400 mt-1.5">レース評価はそのクラスとしてのレースのレベル（S ハイレベル・A 高め・B+ 標準・B- 低め・C 低レベル）。その日の馬場差を除いた勝ちタイムと、出走馬の近走の力から付けています。</div></div>`;
+}
+
+function resultTab(r) {
+  const res = r.result || {}, rc = res.race || {};
+  const box = (t, v, sub = "") => `<div class="bg-gray-50 border border-gray-200 rounded p-2 min-w-[110px]"><div class="text-[11px] text-gray-500">${t}</div><div class="font-bold">${v}</div>${sub ? `<div class="text-[11px] text-gray-500">${sub}</div>` : ""}</div>`;
+  const hitPred = r.shape && rc.pace && rc.type;
+  const laps = (rc.laps || []).map(x => `<span class="inline-block px-1.5 py-0.5 m-0.5 bg-gray-100 border border-gray-200 rounded text-[12px]">${x.toFixed(1)}</span>`).join("");
+  let bet = "";
+  if (r.bet && "bet_return" in res) {
+    const hit = res.bet_return > 0;
+    const T = TIER[tierOf(r)], band = {B: "20〜50倍", B2: "10〜20倍"}[tierOf(r)] || "10〜25倍";
+    bet = `<div class="${hit ? "bg-yellow-100 border-yellow-400" : "bg-gray-100 border-gray-200"} p-2 rounded border mb-4"><span class="text-xs text-gray-500 block">${T.name}・AI推奨買い目（${T.kind}）の結果</span>` +
+      `<span class="font-bold ${hit ? "text-red-600" : "text-gray-500"}">${hit ? `的中 ${yen(res.bet_return)}円` : "不的中"}（投資 ${yen(res.bet_cost)}円）</span>` +
+      `${res.axis_final_in_band ? "" : `<span class="block text-[11px] text-gray-500">◎の確定単勝が${band}の外（実際には見送りの条件）</span>`}</div>`;
+  }
+  return bet + (r.bets_a ? aSection(r, true) : "") + (r.bet_v ? vSection(r, true) : "") + evSection(r) +
+    `<h2 class="font-bold mb-2">レースの流れ</h2><div class="flex flex-wrap gap-2 mb-2">` +
+    box("実際の展開", e(rc.shape || (r.surface === "障害" ? "障害のため対象外" : "-")), hitPred ? `AI予想: ${e(r.shape)}` : "") +
+    box("前半3F", rc.f3 != null ? rc.f3.toFixed(1) : "-") + box("後半3F", rc.l3 != null ? rc.l3.toFixed(1) : "-") +
+    box("前後3F差", rc.diff != null ? (rc.diff > 0 ? "+" : "") + rc.diff : "-", "＋＝前半が速い") + box("レースPCI", rc.pci ?? "-", "50超＝後半が速い") + `</div>` +
+    (laps ? `<div class="mb-2"><span class="text-[11px] text-gray-500 mr-1">ラップ（1Fごと）</span>${laps}</div>` : "") +
+    ((rc.corners || []).length ? `<div class="text-[12px] text-gray-600 mb-4 leading-relaxed">${rc.corners.map(e).join("<br>")}</div>` : "") +
+    `<h2 class="font-bold mb-2">着順</h2>` + sortTable(resCols(r), r.horses, raceKey + "res", "fin", "min-w-[900px]") +
+    `<h2 class="font-bold mb-2">払戻（100円あたり）</h2>` + payTable(rc.pays);
+}
+
+// 推奨度Aの買い目。同じ馬券が複数の案に出るときは金額を合算して1行にまとめる（案の名前は出さない）
+function aTickets(r) {
+  const m = new Map();
+  for (const b of r.bets_a || []) for (const t of b.tickets) {
+    const k = t.type + ":" + t.nums.join("-");
+    if (!m.has(k)) m.set(k, {type: t.type, nums: t.nums, yen: 0});
+    m.get(k).yen += t.yen;
+  }
+  return [...m.values()];
+}
+function aSection(r, withResult) {
+  const tks = aTickets(r), types = ["3連複", "馬連", "ワイド"].filter(t => tks.some(x => x.type === t));
+  const axes = [...new Set(r.bets_a.map(b => b.axis))];
+  const fmt = typ => tks.filter(t => t.type === typ).map(t => `${t.nums.join("-")}（${yen(t.yen)}円）`).join("　");
+  let res = "";
+  const xs = Object.values((r.result || {}).a || {});
+  if (withResult && xs.length) {
+    const ret = xs.reduce((a, x) => a + x.ret, 0), cost = xs.reduce((a, x) => a + x.cost, 0);
+    res = `<div class="text-[13px] mt-2 font-bold ${ret ? "text-red-600" : "text-gray-500"}">${ret ? `的中 ${yen(ret)}円` : "不的中"}（投資 ${yen(cost)}円）</div>`;
+  }
+  return `<div class="bg-white border border-violet-200 rounded p-3 mb-4"><div class="font-bold mb-1"><span class="badge-tiera mr-1">推奨度A</span>推奨買い目</div>` +
+    `<div class="text-[12px]">◎ ${axes.join("・")}　相手 ${[...new Set(r.bets_a.flatMap(b => b.partners.concat(b.stars)))].filter(n => !axes.includes(n)).join("・")}</div>` +
+    types.map(t => `<div class="text-[12px] mt-1">${t} ${fmt(t)}</div>`).join("") +
+    `<div class="text-[12px] mt-1 text-gray-600">${tks.length}点・計${yen(tks.reduce((a, t) => a + t.yen, 0))}円</div>` + res +
+    `<div class="text-[11px] text-gray-500 mt-2">${A_NOTE}</div></div>`;
+}
+
+// 推奨度 S・A・B・C（bet_v）の買い目
+function vSection(r, withResult) {
+  const b = r.bet_v, t = b.tier, T = VT[t];
+  let res = "";
+  const x = (r.result || {}).v;
+  if (withResult && x) res = `<div class="text-[13px] mt-2 font-bold ${x.ret ? "text-red-600" : "text-gray-500"}">${x.ret ? `的中 ${yen(x.ret)}円` : "不的中"}（投資 ${yen(x.cost)}円）` +
+    `${x.in_band || ["新C", "新D"].includes(t) ? "" : '<span class="block text-[11px] font-normal text-gray-500">◎の確定単勝が条件の範囲の外（実際には見送りの条件）</span>'}</div>`;
+  const pts = tks => tks.map(k => k.nums.join("-")).join("　");
+  const trio = (b.kind || "3連複") === "3連複" && !b.trio3, both = !!b.tickets_alt;
+  const sum = tks => `${tks.length}点・計${yen(tks.reduce((a, k) => a + k.yen, 0))}円`;
+  const xa = (r.result || {}).v_alt;
+  const resAlt = withResult && xa ? `<div class="text-[13px] mt-1 font-bold ${xa.ret ? "text-red-600" : "text-gray-500"}">3連複 ${xa.ret ? `的中 ${yen(xa.ret)}円` : "不的中"}（投資 ${yen(xa.cost)}円）</div>` : "";
+  if (b.form) {   // 新馬戦（3連複と馬連を合わせて買う形など）
+    const types = [...new Set(b.tickets.map(k => k.type))];
+    return `<div class="bg-white border ${T.box.split(" ")[1]} rounded p-3 mb-4"><div class="font-bold mb-1"><span class="${T.badge} mr-1">推奨度${vn(t)}</span>新馬戦の推奨買い目</div>` +
+      `<div class="text-[12px] text-gray-600 mb-1">${e(b.form)}</div>` +
+      `<div class="text-[12px]">◎ ${b.axis}　○▲△ ${b.partners.join("・")}　☆ ${(b.stars || []).join("・") || "なし"}${b.tier === "新C" ? "（☆は印のみ）" : ""}</div>` +
+      types.map(ty => { const tk = b.tickets.filter(k => k.type === ty); return `<div class="text-[11px] text-gray-600 mt-1">${ty} ${pts(tk)}（各${yen(tk[0].yen)}円・${sum(tk)}）</div>`; }).join("") +
+      `<div class="text-[12px] mt-1 text-gray-600">合計 ${sum(b.tickets)}</div>` + res +
+      `<div class="text-[11px] text-gray-500 mt-2">${e(b.roi_note || "")}。新馬戦の◎は10分前の単勝と4つの特徴（厩舎・調教・父の新馬戦成績・直前に売れてきた）で決めます。消 = 10倍以上で特徴が1つも無い馬。</div></div>`;
+  }
+  return `<div class="bg-white border ${T.box.split(" ")[1]} rounded p-3 mb-4"><div class="font-bold mb-1"><span class="${T.badge} mr-1">推奨度${vn(t)}</span>推奨買い目（${both ? "馬連 ◎−○▲△ か 3連複 ◎−○▲△−○▲△☆☆☆☆ のどちらか" : trio ? "3連複 ◎−○▲△−○▲△☆☆☆☆" : b.trio3 ? "3連複 ◎−○▲△−○▲△" : b.kind === "単勝" ? "単勝 ◎" : `${b.kind} ◎−○▲△`}）</div>` +
+    `<div class="text-[12px]">◎ ${b.axis}　○▲△ ${b.partners.join("・")}${trio || both ? `　☆ ${b.stars.join("・") || "なし"}` : (b.stars || []).length ? `　☆ ${b.stars.join("・")}（印のみ）` : (r.mark_stars || []).length ? `　☆ ${r.mark_stars.join("・")}（印のみ）` : ""}</div>` +
+    `<div class="text-[11px] text-gray-600 mt-1">${b.kind || "3連複"} ${pts(b.tickets)}（各${yen(b.tickets[0].yen)}円・${sum(b.tickets)}）</div>` +
+    (both ? `<div class="text-[11px] text-gray-600 mt-1">${b.alt_kind} ${pts(b.tickets_alt)}（各${yen(b.tickets_alt[0].yen)}円・${sum(b.tickets_alt)}）</div>` : "") +
+    (both ? "" : `<div class="text-[12px] mt-1 text-gray-600">${sum(b.tickets)}</div>`) + (both && res ? res.replace(">的中", ">馬連 的中").replace(">不的中", ">馬連 不的中") : res) + resAlt +
+    (b.label ? `<div class="text-[11px] text-gray-600 mt-1">${e(b.label)}</div>` : "") +
+    `<div class="text-[11px] text-gray-500 mt-2">${e(b.roi_note || V_ROI[t] || "")}。${["新C", "新D"].includes(t) ? V_NOTE_D : V_NOTE}</div></div>`;
+}
+
+let raceKey = "", curPastKey = "", pastSrc = "";
+const pastCache = {};
+// 馬名を押すと過去走を開く（app/past_export.py が書く data/past/<日付>.json を、押したときだけ読む）。もう一度押すと閉じる
+async function togglePast(num, el) {
+  const tr = el.closest("tr");
+  const nxt = tr.nextElementSibling;
+  if (nxt && nxt.classList.contains("pastrow")) { nxt.remove(); return; }
+  const date = pastSrc || raceKey.split("-")[0];
+  const row = document.createElement("tr");
+  row.className = "pastrow";
+  row.innerHTML = `<td colspan="${tr.children.length}"><div class="pastbox"><div class="text-[11px] text-gray-500">読み込み中…</div></div></td>`;
+  tr.after(row);
+  try {
+    if (!pastCache[date]) pastCache[date] = await fetch(pastSrc || `data/past/${date}.json`, {cache: "no-cache"}).then(x => x.ok ? x.json() : {});
+  } catch (err) { pastCache[date] = {}; }
+  const runs = pastSrc ? (pastCache[date] || {})[String(num)] : ((pastCache[date] || {})[curPastKey] || {})[String(num)];
+  row.querySelector(".pastbox").innerHTML = runs && runs.length ? `<div class="text-[10px] text-gray-500">評価（右上）: S 最高評価・A 高評価・B+ 標準・B- 評価を下げる・C 最低評価。そのクラスでの絶対評価で、レースの中での走り（着差・展開の有利不利・上がり）に、レースレベル（その日の馬場差を除いた勝ちタイム・出走馬の近走の力）を含めています。同じ着順でも、高レベル戦なら上がり、低レベル戦なら下がります。</div>` + runs.map(pastRun).join("") :
+    `<div class="text-[11px] text-gray-500">${pastCache[date] && Object.keys(pastCache[date]).length ? "過去走はありません（初出走）。" : "この日の過去走はまだありません（新しい開催日20日分だけ置いています）。"}</div>`;
+}
+function pastRun(x) {
+  const [kai, place, course, going, cls, name, heads, waku, num, jockey, kg, pop, odds, fin, margin, time, hosei, passing, l3, l3r, pci, weight, gap, ai, comment, grade] = x;
+  const top = /^[123]$/.test(fin);
+  const aiColor = /不利で好走/.test(ai) ? "background:#e3f4ea;color:#1f7a45" : /有利で凡走|利で凡走/.test(ai) ? "background:#fde8e8;color:#b42318" :
+    /好走/.test(ai) ? "background:#eef2fb;color:#2f4f8f" : "background:#f1f1f1;color:#555";
+  const gcl = g => g.replace("+", "p").replace("-", "m");
+  const gr = grade ? `<span class="gr gr-${gcl(grade)}">${e(grade)}</span>` : "";
+  return `<div class="prun"><div>${gr}<b>${e(kai)}</b> ${e(name)}${cls && !name.normalize("NFKC").includes(cls.normalize("NFKC")) ? `（${e(cls)}）` : ""} ${e(course)} ${e(going)} ${e(heads)}頭</div>` +
+    `<div><span class="fin${top ? " top" : ""}">${e(fin || "-")}着</span>${margin ? `${e(margin)}差　` : ""}${e(time)}${hosei ? `　補正${e(hosei)}` : ""}</div>` +
+    `<div>${waku ? `${e(waku)}枠` : ""}${e(num)}番　${e(jockey)} ${e(kg)}　${e(pop)}人気 ${e(odds)}倍${weight ? `　${e(weight)}` : ""}${gap ? `　間隔${e(gap)}週` : ""}</div>` +
+    `<div>${passing ? `通過 ${e(passing)}　` : ""}${l3 ? `上り${e(l3)}${l3r ? `（${e(l3r)}位）` : ""}` : ""}${pci ? `　PCI ${e(pci)}` : ""}</div>` +
+    (ai ? `<div style="margin-top:3px"><span class="tg" style="${aiColor}">AI ${e(ai)}</span></div>` : "") +
+    (comment ? `<div class="cm"><b style="color:#9a7b2f">AIのコメント</b>　${e(comment)}</div>` : "") + `</div>`;
+}
+
+async function racePage(date, pcode, rno, tab) {
+  const d = await get(date);
+  const r = d.races.find(x => (PLACE[x.place] || "00") === pcode && x.race === rno);
+  if (!r) return '<p>このレースの予想がありません。</p>';
+  raceKey = `${date}-${pcode}-${rno}`;
+  pastSrc = "";
+  curPastKey = `${r.place}${r.race}`;
+  const id = `r-${raceKey}`;
+  if (!r.result) tab = "card";
+  const hdr = (r.kai ? `${r.kai}回 ${e(r.place)} ${r.nichi}日目` : e(r.place)) + (r.start ? ` ${e(r.start)}発走` : "");
+  const boxes = [];
+  if (pending(r)) boxes.push(`<div class="bg-gray-100 p-3 rounded border border-gray-300"><span class="font-bold text-gray-600">${PENDING_MSG}</span></div>`);
+  if (r.shape && !pending(r)) boxes.push(`<div class="bg-gray-100 p-2 rounded border border-gray-200 max-w-[420px]"><span class="text-xs text-gray-500 block">AI展開予想</span>` +
+    `<span class="font-bold text-[#2c3e50]">${e(r.shape)}</span><span class="block text-[11px] text-gray-500">${e(r.shape_note || "")}</span></div>`);
+  if (r.bet) {
+    const b = r.bet, T = TIER[tierOf(r)];
+    const line = ["S", "SD"].includes(tierOf(r)) ?`◎${b.axis} − ${b.partners.join("・")} − ${b.partners.concat(b.stars).join("・")}` : tierOf(r) === "B2" ? `◎${b.axis}（単勝・複勝）` : `◎${b.axis} − ${b.partners.join("・")}（馬連・ワイド）`;
+    boxes.push(`<div class="${T.box} p-2 rounded border"><span class="text-xs text-gray-500 block"><span class="${T.badge} mr-1">${T.name}</span>AI推奨買い目（${T.kind}）</span>` +
+      `<span class="font-bold ${T.text}">${line}</span>` +
+      `<span class="block text-[11px] text-gray-500">${b.tickets.length}点・計${yen(b.tickets.reduce((a, t) => a + t.yen, 0))}円</span></div>`);
+  } else if (r.bets_a) {
+    const axes = [...new Set(r.bets_a.map(b => b.axis))], tks = aTickets(r);
+    boxes.push(`<div class="bg-violet-50 p-2 rounded border border-violet-200"><span class="text-xs text-gray-500 block"><span class="badge-tiera mr-1">推奨度A</span>AI推奨買い目</span>` +
+      `<span class="font-bold text-violet-700">軸 ${axes.map(a => "◎" + a).join("・")}</span>` +
+      `<span class="block text-[11px] text-gray-500">${tks.length}点・計${yen(tks.reduce((a, t) => a + t.yen, 0))}円</span></div>`);
+  }
+  if (r.bet_v) {
+    const b = r.bet_v, T = VT[b.tier];
+    const trio = (b.kind || "3連複") === "3連複" && !b.trio3, both = !!b.tickets_alt;
+    const yenOf = tks => yen(tks.reduce((a, t) => a + t.yen, 0));
+    boxes.push(`<div class="${T.box} p-2 rounded border"><span class="text-xs text-gray-500 block"><span class="${T.badge} mr-1">推奨度${vn(b.tier)}</span>AI推奨買い目（${both ? "馬連か3連複" : b.kind || "3連複"}）</span>` +
+      `<span class="font-bold ${T.text}">${b.form ? `◎${b.axis} − ${b.partners.join("・")}${b.tier === "新C" ? "" : ` − ☆${(b.stars || []).join("・")}`}` : (b.kind === "単勝" ? `◎${b.axis}` : `◎${b.axis} − ${b.partners.join("・")}${trio || both ? ` − ${b.partners.concat(b.stars).join("・")}` : ""}`)}</span>` +
+      `<span class="block text-[11px] text-gray-500">${both ? `馬連 ${b.tickets.length}点・${yenOf(b.tickets)}円／3連複 ${b.tickets_alt.length}点・${yenOf(b.tickets_alt)}円` : `${b.tickets.length}点・計${yenOf(b.tickets)}円`}</span></div>`);
+  }
+  if (noBet(r)) {
+    boxes.push(`<div class="bg-gray-100 p-2 rounded border border-gray-200"><span class="text-xs text-gray-500 block">AI推奨買い目</span><span class="font-bold text-gray-500">${skipLabel(r)}</span>` +
+      `<span class="block text-[11px] text-gray-500">${hasOdds(r) ? "どの推奨度の◎もいない（印は参考）" : "単勝オッズが出たら推奨度と印を決める"}</span></div>`);
+  }
+  const res = r.result || {};
+  if (r.bet_v && res.v) {
+    const both = res.v_alt && r.bet_v.tickets_alt;
+    const hit = res.v.ret > 0 || (both && res.v_alt.ret > 0);
+    const line = (x, lab) => `<span class="block font-bold ${x.ret ? "text-red-600" : "text-gray-500"}">${lab}${x.ret ? `的中 ${yen(x.ret)}円` : "不的中"}（投資 ${yen(x.cost)}円）</span>`;
+    boxes.push(`<div class="${hit ? "bg-yellow-100 border-yellow-400" : "bg-gray-100 border-gray-200"} p-2 rounded border"><span class="text-xs text-gray-500 block">結果（推奨度${vn(r.bet_v.tier)}）</span>` +
+      (both ? line(res.v, "馬連：") + line(res.v_alt, "3連複：") : line(res.v, "")) + `</div>`);
+  }
+  if (r.bet && "bet_return" in res) {
+    const hit = res.bet_return > 0;
+    boxes.push(`<div class="${hit ? "bg-yellow-100 border-yellow-400" : "bg-gray-100 border-gray-200"} p-2 rounded border"><span class="text-xs text-gray-500 block">結果</span>` +
+      `<span class="font-bold ${hit ? "text-red-600" : "text-gray-500"}">${hit ? `的中 ${yen(res.bet_return)}円` : "不的中"}（投資 ${yen(res.bet_cost)}円）</span></div>`);
+  }
+  const xa = Object.values(res.a || {});
+  if (r.bets_a && xa.length) {
+    const ret = xa.reduce((a, x) => a + x.ret, 0), cost = xa.reduce((a, x) => a + x.cost, 0);
+    boxes.push(`<div class="${ret ? "bg-yellow-100 border-yellow-400" : "bg-gray-100 border-gray-200"} p-2 rounded border"><span class="text-xs text-gray-500 block">結果</span>` +
+      `<span class="font-bold ${ret ? "text-red-600" : "text-gray-500"}">${ret ? `的中 ${yen(ret)}円` : "不的中"}（投資 ${yen(cost)}円）</span></div>`);
+  }
+  let tick = "";
+  if (r.bet) {
+    const b = r.bet, tr = tierOf(r), T = TIER[tr];
+    let lines;
+    if (tr === "S" || tr === "SD") {
+      const main = b.tickets.filter(t => t.yen > 100).map(t => `${t.nums.join("-")}（${t.yen}円）`).join("　");
+      const sub = b.tickets.filter(t => t.yen <= 100).map(t => t.nums.join("-")).join("　");
+      lines = `<div class="text-[12px]">◎ ${b.axis}　○▲△ ${b.partners.join("・")}　☆ ${b.stars.join("・") || "なし"}</div>` +
+        (main ? `<div class="text-[12px] mt-1">3連複 ${main}</div><div class="text-[11px] text-gray-500 mt-1">${sub}（各100円）</div>`
+              : `<div class="text-[12px] mt-1">3連複 ${sub}（各100円・${b.tickets.length}点・計${yen(b.tickets.reduce((a, t) => a + t.yen, 0))}円）</div>`);
+    } else if (tr === "B2") {
+      const yenOf = k => b.tickets.find(t => t.type === k).yen;
+      lines = `<div class="text-[12px]">◎ ${b.axis}</div><div class="text-[12px] mt-1">単勝 ${b.axis}（${yen(yenOf("単勝"))}円）　複勝 ${b.axis}（${yen(yenOf("複勝"))}円）</div>`;
+    } else {
+      const by = k => b.tickets.filter(t => t.type === k).map(t => `${t.nums.join("-")}（${t.yen}円）`).join("　");
+      lines = `<div class="text-[12px]">◎ ${b.axis}　○▲△ ${b.partners.join("・")}</div>` +
+        `<div class="text-[12px] mt-1">馬連 ${by("馬連")}</div><div class="text-[12px] mt-1">ワイド ${by("ワイド")}</div>`;
+    }
+    tick = `<div class="bg-white border border-gray-200 rounded p-3 mb-4"><div class="font-bold mb-1"><span class="${T.badge} mr-1">${T.name}</span>推奨買い目（${T.kind}）</div>` +
+      lines + `<div class="text-[11px] text-gray-500 mt-1">${T.note}</div></div>`;
+  }
+  if (r.bets_a) tick += aSection(r, false);
+  if (r.bet_v) tick += vSection(r, false);
+  const note = (r.odds_at ? `<div class="text-[12px] text-gray-600 mb-2">単勝は速報オッズ（${e(r.odds_at)} 発表）。期待値・推奨度もこのオッズで計算しています。</div>` : "") +
+    (r.day_bias ? `<div class="text-[12px] text-gray-600 mb-2">${e(r.day_bias)}</div>` : "");
+  const tabs =`<div class="flex gap-1 border-b-2 border-[#2c3e50] mb-4">` +
+    `<a href="#${id}" class="tab${tab === "card" ? " tab-on" : ""}">出馬表</a>` +
+    (r.result ? `<a href="#${id}-res" class="tab${tab === "res" ? " tab-on" : ""}">結果</a>` : `<span class="tab opacity-50">結果（レース後）</span>`) + `</div>`;
+  const legend = `<div class="text-[11px] text-gray-500 leading-relaxed">見出しを押すと並び替え（もう一度押すと逆順）。AI印：◎＝軸（推奨度S：オープン以上・芝で単勝10〜25倍×能力S/A（同じ条件のダートは推奨度A）、推奨度B：3勝クラスで単勝20〜50倍×能力S/A、推奨度A：3勝芝で単勝20〜30倍・ランクB+以上・能力÷市場1.2以上。見落とし度の推奨度（S：1勝・3勝芝・オープン以上芝の馬連、A：3勝ダートの3連複・オープン以上ダートの馬連、C：未勝利・2勝の馬連）：単勝10〜20倍で見落とし度1.1以上。上の推奨度と重なったら1つだけ出す（芝は上の推奨度、ダートは見落とし度）。ほかの推奨度が付かないレースは推奨度D（単勝6.9倍以下×能力S・A×見落とし度1.0以上から◎、ワイド ◎−○▲△ 各500円で1,500円）。オッズが出る前は付かない。新馬戦は別の決め方：推奨度Bは◎10〜20倍で特徴3つ以上、推奨度Cはそれ以外のレースで特徴の多い馬が◎、3連複 ◎−○▲△）／○▲△＝能力上位3頭（見落とし度の推奨度は見落とし度1.0以上から能力順）／☆＝能力4〜7位（推奨度Sの3連複）、見落とし度0.9〜1.0を人気順（それ以外。馬連のレースでは印だけで買い目には入れない）／消＝能力20点未満。` +
+    `見落とし度＝オッズ以外の材料も入れた3着内確率 ÷ 単勝オッズだけの3着内確率（オッズが入ってから出る）。` +
+    `能力＝新適合度のランク（S・A・B+・B-・C。20点未満の「消」も C で表示）。AI評価＝能力の点に見落とし度を足した総合の5段階（印を決める材料と同じ。オッズが出る前は能力だけ）。近走評価＝近3走の評価（過去走の右上の S〜C。新しい走りほど重く、今回とのクラスの差で上げ下げ）をまとめた5段階（スマホは馬名の下。過去走が無い馬は出ない）。展開＝当日の前のレースの傾向への合い方。適合度＝オッズ抜きの3着内確率。` +
+    `期待値＝適合度 ÷ 単勝オッズから見込まれる3着内率（100%超＝能力のわりに人気がない）。総合評価＝新適合度の100点。${r.odds_at ? "" : "単勝は出馬表を出した時点。"}</div>`;
+  const W = {1: "waku-1", 2: "waku-2", 3: "waku-3", 4: "waku-4", 5: "waku-5", 6: "waku-6", 7: "waku-7", 8: "waku-8"};
+  const mrows = [...(r.horses || [])].sort((a, b) => a.num - b.num).map(h => `<tr class="${h.mark === "◎" ? "ax" : ""}"><td><span class="wk ${W[h.waku] || ""}" style="${h.waku === 1 ? "border:1px solid #ddd" : ""}">${h.waku || ""}</span></td>` +
+    `<td class="num font-extrabold">${h.num}</td><td><span class="m-${h.mark || ""}">${h.mark || ""}</span></td>` +
+    `<td class="nm pn" onclick="togglePast(${h.num}, this)">${e(h.name)}<span class="pt">過去走▼</span><small>${e(h.sex || "")}${h.age || ""}・${e(h.jockey || "")}・${h.kg || ""}${h.rec ? `・近走<span class="${gcls(h.rec)}">${e(h.rec)}</span>` : ""}</small></td>` +
+    `<td class="num font-bold">${h.odds ?? "-"}</td><td class="num">${h.pop ?? "-"}</td><td class="font-bold">${gcell(h.grade)}</td><td class="font-bold">${gcell(h.ai)}</td></tr>`).join("");
+  const mtable = `<table class="mtbl mb-2"><tr><th>枠</th><th>番</th><th>印</th><th style="text-align:left">馬名</th><th>単勝</th><th>人気</th><th>能力</th><th>AI</th></tr>${mrows}</table>`;
+  const aiSec = `<div class="sec-h" id="ai">AIの印と買い目</div><div class="flex flex-wrap gap-2 mb-3">${boxes.join("")}</div>` + tick;
+  const body = tab === "res" ? resultTab(r) + `<div class="flex flex-wrap gap-2 mt-3">${boxes.join("")}</div>` :
+    note + mtable + `<div class="dtable">${sortTable(cardCols(r), r.horses, raceKey + "card", "num", "min-w-[1100px]")}</div>` + aiSec + legend;
+  document.title = `${r.race}R ${r.full_name || r.name}`;
+  return `<div class="bg-white border-t-[4px] border-[#2c3e50] shadow-md p-4 md:p-6">` +
+    `<div class="mb-4"><a href="#d-${date}" class="text-blue-600 hover:underline text-xs">◀ レース一覧へ戻る</a></div>` + raceNav(date, d, r, tab) +
+    `<div class="flex flex-col gap-3 pb-2 mb-2"><div><div class="text-gray-500 text-sm mb-1">${jpDate(date)}　${hdr}</div>` +
+    `<h1 class="text-2xl font-bold flex flex-wrap items-center gap-2">${r.race}R ${e(r.full_name || r.name)} ${classBadge(r)}</h1>` +
+    `<div class="text-gray-600 text-sm mt-1">${e(r.surface)}${r.distance || ""}m / 馬場: ${e(r.track || "-")} / ${r.heads}頭</div></div>` +
+    `</div>${tabs}${body}</div>`;
+}
+
+async function route(keepScroll) {
+  const h = location.hash.slice(1);
+  let m;
+  let isHome = false;
+  try {
+    if (h === "latest") { const dl = currentDate((await get("days")).map(x => x.date)); app.innerHTML = await dayPage(dl); lastDate = dl; }
+    else if (h === "about") { app.innerHTML = await aboutPage(); }
+    else if (h === "tiers") { app.innerHTML = await tiersPage(); }
+    else if (h === "stats") { app.innerHTML = await statsPage(); }
+    else if (h === "days") { app.innerHTML = await daysPage(); }
+    else if ((m = h.match(/^h-(\d{8})-(\d{2})-(\d{1,2})(-res)?$/))) { app.innerHTML = await histRacePage(m[1], m[2], +m[3], m[4] ? "res" : "card"); }
+    else if ((m = h.match(/^d-(\d{8})$/))) { app.innerHTML = await dayPage(m[1]); lastDate = m[1]; }
+    else if ((m = h.match(/^r-(\d{8})-(\d{2})-(\d{1,2})(-res)?$/))) { app.innerHTML = await racePage(m[1], m[2], +m[3], m[4] ? "res" : "card"); lastDate = m[1]; }
+    else { app.innerHTML = await home(); isHome = true; }
+  } catch (err) {
+    app.innerHTML = `<p class="text-gray-500">データを読み込めませんでした（${e(err.message)}）。<a href="#top" class="text-blue-600 underline">ホームへ</a></p>`;
+  }
+  const tabOf = ["stats", "about", "tiers"].includes(h) || h.startsWith("h-") ? (h.startsWith("h-") ? "stats" : h) : isHome ? "home" : "day";
+  document.querySelectorAll(".bnav a").forEach(a => a.classList.toggle("on", a.dataset.tab === tabOf));
+  const seen = h === "days" && lastDate && document.getElementById(`day-${lastDate}`);
+  const backH = h === "stats" && !keepScroll && lastHist && document.getElementById(`hr-${lastHist}`);   // 過去の重賞から戻ったら、その行まで
+  if (backH) { backH.scrollIntoView({block: "center"}); lastHist = ""; }
+  else if (seen) seen.scrollIntoView({block: "center"});
+  else if (!keepScroll) window.scrollTo(0, 0);
+}
+app.addEventListener("click", ev => {
+  const th = ev.target.closest("th[data-sort]");
+  if (!th) return;
+  const k = th.dataset.sort;
+  SORT.dir = SORT.key === k ? -SORT.dir : 1;
+  SORT.key = k;
+  route(true);
+});
+app.addEventListener("click", ev => {   // 推奨度の一覧・ホームから成績へ、条件を入れて移る
+  const a = ev.target.closest("[data-sf]");
+  if (a) Object.assign(STATS_F, JSON.parse(a.dataset.sf));
+  const g = ev.target.closest("[data-g]");   // 重賞ヒストリーのグレード（複数選択）
+  if (g) { GRADE_F.has(g.dataset.g) ? GRADE_F.delete(g.dataset.g) : GRADE_F.add(g.dataset.g); GRADE_LIMIT = 50; route(true); }
+  const yb = ev.target.closest("[data-y]");   // 重賞ヒストリーの年（複数選択。全期間で解除）
+  if (yb) { const y = yb.dataset.y; if (!y) YEAR_F.clear(); else YEAR_F.has(y) ? YEAR_F.delete(y) : YEAR_F.add(y); GRADE_LIMIT = 50; route(true); }
+  if (ev.target.closest("[data-more]")) { GRADE_LIMIT += 100; route(true); }
+});
+app.addEventListener("change", ev => {
+  const f = ev.target.closest("select[data-f]");
+  if (f) { STATS_F[f.dataset.f] = f.value; route(true); return; }
+  const s = ev.target.closest("select[data-nav]");
+  if (s) location.hash = s.value;
+});
+addEventListener("hashchange", () => route(false));
+route(false);
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");</script>
+</body></html>
